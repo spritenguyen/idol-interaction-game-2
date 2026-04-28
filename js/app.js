@@ -1292,7 +1292,9 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         this.currentScoutCandidate = null;
     },
 
-    async triggerDeleteIdol(id, name) {
+    async triggerDeleteIdol(id) {
+        const idol = cardEngine.getIdol(id);
+        const name = idol ? idol.name : 'Unknown';
         this.showDialog({
             title: `<span style="color:var(--error);">⚠️ SA THẢI MODEL</span>`,
             message: `Bạn có chắc chắn muốn sa thải Model "${name}"? Thao tác này không thể hoàn tác.`,
@@ -1562,7 +1564,7 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                 <button id="btn-update-modal-${idol.id}" class="btn-action btn-primary w-full" onclick="gameApp.triggerUpdateIdol('${idol.id}')">CẬP NHẬT TREND</button>
             </div>
             
-            <button class="btn-action w-full mt-12" style="background:#4a0f12; color:#ef4444; border: 1px solid #ef4444;" onclick="gameApp.triggerDeleteIdol('${idol.id}', '${idol.name.replace(/'/g, "\\'")}')">🚫 SA THẢI MODEL</button>
+            <button class="btn-action w-full mt-12" style="background:#4a0f12; color:#ef4444; border: 1px solid #ef4444;" onclick="gameApp.triggerDeleteIdol('${idol.id}')">🚫 SA THẢI MODEL</button>
             <button class="btn-action w-full mt-10" style="background:var(--bg-surface); color:var(--text-main);" onclick="gameApp.closeIdolProfile()">✖ ĐÓNG HỒ SƠ</button>
         `;
 
@@ -1582,6 +1584,33 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         
         document.getElementById('chat-title').textContent = idol.name;
         document.getElementById('chat-mood').textContent = `Tâm trạng: ${idol.mood || 'Bình thường'}`;
+        
+        // Cập nhật bối cảnh không gian chat
+        const chatModalContent = document.querySelector('#chat-modal .chat-content');
+        if (chatModalContent) {
+            chatModalContent.style.filter = '';
+            chatModalContent.style.background = '';
+            chatModalContent.style.border = '';
+            chatModalContent.style.boxShadow = '';
+            if (idol.corruption && idol.corruption >= 80) {
+                chatModalContent.style.background = 'linear-gradient(135deg, #1a0000, #0a0000)';
+                chatModalContent.style.border = '1px solid #ef4444';
+                chatModalContent.style.boxShadow = '0 0 30px rgba(239, 68, 68, 0.4)';
+            } else if (idol.corruption && idol.corruption >= 50) {
+                chatModalContent.style.background = 'linear-gradient(135deg, #2b0b1a, #0d0107)';
+                chatModalContent.style.border = '1px solid #ec4899';
+            } else if (idol.stress && idol.stress >= 70) {
+                chatModalContent.style.background = 'linear-gradient(135deg, #1f2937, #030712)';
+                chatModalContent.style.filter = 'grayscale(30%)';
+                chatModalContent.style.border = '1px solid #4b5563';
+            } else if (idol.affinity && idol.affinity >= 70) {
+                chatModalContent.style.background = 'linear-gradient(135deg, #162440, #040914)';
+                chatModalContent.style.border = '1px solid #3b82f6';
+                chatModalContent.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.2)';
+            } else {
+                chatModalContent.style.background = 'var(--bg-surface)';
+            }
+        }
         
         let safeAvatar = idol.avatarUrl;
         if (!safeAvatar || safeAvatar === 'undefined' || safeAvatar.startsWith('blob:')) { safeAvatar = this.fallbackImage; }
@@ -1708,6 +1737,7 @@ YÊU CẦU CHO THẾ GIỚI GAME:
 2. Giọng điệu phụ thuộc MẠNH MẼ vào Độ hảo cảm, Căng thẳng và ĐẶC BIỆT LÀ ĐỘ THA HÓA (Corruption: ${idol.corruption || 0}/100). Hảo cảm thấp (<30): Xa cách. Hảo cảm cao (>70): Thân mật. Căng thẳng cao (>70): Cáu gắt, mệt mỏi. Tha hóa cao (>50): Dâm đãng, thực dụng, mưu mô, buông thả. Tha hóa 100 (Dark Muse): Hoàn toàn sa ngã, lộng ngôn, cám dỗ, coi thường mọi thứ trừ tiền và quyền lực.
 3. Thay đổi hình thể: AI hãy nội suy thông số cơ thể tự nhiên theo ngữ cảnh chat thực tế. VD: Nếu làm việc nhiều (đi gym, thể thao, diễn concert, quay phim liên tục...) -> thì số đo nên giảm dần (Cân nặng giảm; Nếu mệt mỏi quá thì Vòng 1, Vòng 3 sụt giảm). Nếu nghỉ ngơi nhiều, ăn uống, du lịch, ít hoạt động -> thì Cân nặng tăng, Vòng bụng (Waist) có xu hướng tăng. Hãy thay đổi các trường new_weight, new_bust, new_waist, new_hips một cách logic nhất so với hiện tại.
 4. Tương tác UI bối cảnh: Nếu bối cảnh chat đề cập mua sắm, đề xuất action 'shop'. Nếu đi chụp ảnh, đề xuất 'photo'. Nếu đi làm, đề xuất 'job'. Nghỉ ngơi giải trí chung chung, đề xuất 'spa'. Nếu sếp/model đề cập đích danh: massage thì đề xuất 'spa_relax', chăm sóc da thì 'spa_skin', đi nghỉ dưỡng thì 'spa_vacation', ép cân thì 'spa_diet', đi tập luyện gym cường độ cao thì 'spa_gym'. Nếu sếp yêu cầu ĐI HỌC nâng cao kỹ năng (catwalk, acting, communication, singing, dancing) và bạn ĐỒNG Ý, hãy thêm hành động 'learn_skill_[tên_kỹ_năng]' (ví dụ 'learn_skill_catwalk').
+5. Cơ Chế Nhờ Vả/Vòi Vĩnh (Sugar Daddy mechanic): Đặc biệt nếu Tha hóa > 30 hoặc Hảo cảm > 60, bạn thỉnh thoảng (khoảng 20% khả năng) NHÕNG NHẼO VÀ ĐÒI SẾP MUA QUÀ ĐẮT TIỀN (túi hiệu, xe sang, trang sức,...) bằng cách trả về object "buy_request" ở trong JSON. Nếu có vòi quà, tự thêm lời vòi vĩnh vào phần "reply".
 
 PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
 {
@@ -1725,6 +1755,7 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
    "affinity_change": 0,
    "stress_change": 0,
    "suggested_ui_actions": ["photo"], // mảng chứa các hành động gợi ý ('photo', 'shop', 'job', 'spa') nếu phù hợp ngữ cảnh, hoặc rỗng
+   "buy_request": { "item": "Tên món quà (vd: Xe thể thao)", "price": 5000 }, // object chứa món đồ đắt tiền (1000 - 10000 💰) hoặc null nếu không đòi gì hết.
    "image_prompt": "Nếu suggested_ui_actions có 'photo', DỰA BÁM SÁT VÀO NGỮ CẢNH CUỘC CHAT để suy luận ra 1 prompt tạo ảnh (Tiếng Anh, professional, FULL-BODY SHOT, 8k, cinematic, mô tả rõ trang phục người mẫu đang mặc, bối cảnh và cảm xúc lúc này). ƯU TIÊN GÓC CHỤP TOÀN THÂN (Full-body). Nếu không có photo action, để rỗng."
 }`;
 
@@ -1830,7 +1861,15 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
                     } else if (act === 'shop') {
                          actionHtml += `<button class="btn-action" style="background:var(--secondary); color:white;" onclick="gameApp.closeChat(); gameApp.switchView('shop')">🛍️ MUA SẮM</button>`;
                     } else if (act === 'spa') {
-                         actionHtml += `<button class="btn-action" style="background:var(--primary); color:white;" onclick="gameApp.closeChat(); gameApp.switchView('spa')">💆‍♀️ ĐI SPA</button>`;
+                         actionHtml += `
+                         <div style="width:100%; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; margin-top: 4px;">
+                             <div style="font-size: 11px; color: var(--gold); margin-bottom: 6px; text-transform:uppercase;">👑 Gợi ý gói Spa / Thư giãn nhanh:</div>
+                             <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                 <button class="btn-action" style="flex:1; padding: 6px; background:linear-gradient(135deg, #0f4a22, #082a13); border:1px solid #34d399; color:white; font-size:11px;" onclick="gameApp.executeSpaChat('spa_relax', 100, '${idol.id}', this)">🌿 Massage (100 💰)</button>
+                                 <button class="btn-action" style="flex:1; padding: 6px; background:linear-gradient(135deg, #5b1248, #2a0521); border:1px solid #ec4899; color:white; font-size:11px;" onclick="gameApp.executeSpaChat('spa_skin', 300, '${idol.id}', this)">✨ Skincare (300 💰)</button>
+                                 <button class="btn-action" style="flex:1; padding: 6px; background:linear-gradient(135deg, #1d4ed8, #0e2978); border:1px solid #60a5fa; color:white; font-size:11px;" onclick="gameApp.executeSpaChat('spa_vacation', 1000, '${idol.id}', this)">🏖️ Chọn Kỳ nghỉ (1000 💰)</button>
+                             </div>
+                         </div>`;
                     } else if (act.startsWith('spa_')) {
                         let spaPrice = 100;
                         let spaName = "Dịch Vụ Spa";
@@ -1840,7 +1879,7 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
                         else if (act === 'spa_diet') { spaPrice = 1500; spaName = "Ép cân"; }
                         else if (act === 'spa_gym') { spaPrice = 1500; spaName = "Tập Gym"; }
                         
-                        actionHtml += `<button class="btn-action" style="background:var(--primary); color:white;" onclick="gameApp.executeSpa('${act}', ${spaPrice}, '${idol.id}'); this.disabled=true; this.innerText='ĐÃ THỰC HIỆN';">🌿 THỰC HIỆN: ${spaName.toUpperCase()} (${spaPrice} 💰)</button>`;
+                        actionHtml += `<button class="btn-action" style="background:var(--primary); color:white;" onclick="gameApp.executeSpaChat('${act}', ${spaPrice}, '${idol.id}', this)">🌿 THỰC HIỆN: ${spaName.toUpperCase()} (${spaPrice} 💰)</button>`;
                     } else if (act === 'job') {
                          actionHtml += `<button class="btn-action btn-success" onclick="gameApp.closeChat(); gameApp.switchView('jobs')">🏢 TÌM HỢP ĐỒNG</button>`;
                     } else if (act.startsWith('learn_skill_')) {
@@ -1857,6 +1896,22 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
                 }
             }
 
+            if (data.buy_request && typeof data.buy_request === 'object' && data.buy_request.item) {
+                const safeItem = data.buy_request.item.replace(/'/g, "\\'");
+                const priceStr = data.buy_request.price.toLocaleString();
+                let sponsorHtml = `
+                    <div style="background: linear-gradient(135deg, #2b0b1a, #0d0107); border: 1px solid #ec4899; padding: 10px; border-radius: 8px; margin-top: 8px;">
+                        <div style="color: #ec4899; font-weight: bold; font-size: 12px; margin-bottom: 5px;">🔥 NHỜ VẢ / VÒI QUÀ 🔥</div>
+                        <div style="color: white; font-size: 13px; margin-bottom: 8px;">Model muốn sếp mua: <strong style="color: var(--gold);">${data.buy_request.item}</strong> (${priceStr} 💰)</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-action" style="flex: 1; padding: 6px; background: var(--success); color: white; font-size: 11px;" onclick="gameApp.handleSponsorRequest('${idol.id}', '${safeItem}', ${data.buy_request.price}, true, this.parentElement.parentElement)">✅ Đồng ý (Tăng Hảo cảm)</button>
+                            <button class="btn-action" style="flex: 1; padding: 6px; background: var(--error); color: white; font-size: 11px;" onclick="gameApp.handleSponsorRequest('${idol.id}', '${safeItem}', ${data.buy_request.price}, false, this.parentElement.parentElement)">❌ Khước từ (Giảm Hảo cảm)</button>
+                        </div>
+                    </div>
+                `;
+                this.appendMessage('system', sponsorHtml);
+            }
+
             if (updated) {
                 await dbManager.saveIdolData(idol);
                 this.renderCards();
@@ -1870,6 +1925,66 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
 
         input.disabled = false;
         input.focus();
+    },
+
+    async executeSpaChat(serviceId, price, idolId, btnElement) {
+        if (gameManager.state.money < price) {
+            return this.showToast("Không đủ tiền thanh toán!", "error");
+        }
+        // Gọi hàm gốc để trừ tiền và đổi stats
+        await this.executeSpa(serviceId, price, idolId);
+        
+        if (btnElement) {
+            btnElement.parentElement.innerHTML = `<span style="color:var(--success);font-size:12px;">Đã tổ chức Spa/Thư giãn!</span>`;
+        }
+
+        const idol = cardEngine.getIdol(idolId);
+        if (!idol) return;
+
+        // Sinh ra một câu phản hồi nhanh của AI
+        const typingId = 'typing-' + Date.now();
+        this.appendMessage('model', 'typing', typingId);
+        
+        try {
+            const promptText = `Bạn là model ${idol.name}. Tổ chức quản lý (sếp) vừa chi ${price} tiền để cho bạn đi dịch vụ mã "${serviceId}" (Spa/Thư giãn/Làm đẹp). Hãy nói ngắn gọn (1 câu) phản ứng của bạn (biết ơn, hoặc nũng nịu, hoặc sảng khoái). Trả lời text thường, không chứa JSON.`;
+            this.injectKeys();
+            const provider = document.getElementById('logic-provider').value;
+            const service = (provider === 'gemini') ? geminiService : pollinationsService;
+            let result = (provider === 'gemini') ? await service.generateContent(promptText) : await service.generateText(promptText);
+            document.getElementById(typingId)?.remove();
+            this.appendMessage('model', result.replace(/['"«»*]/g, '').trim());
+        } catch (e) {
+            document.getElementById(typingId)?.remove();
+            this.appendMessage('model', "Trải nghiệm này thật tuyệt, cảm ơn sếp nhiều nha~");
+        }
+    },
+
+    async handleSponsorRequest(idolId, item, price, isApproved, containerElement) {
+        const idol = cardEngine.getIdol(idolId);
+        if (!idol) return;
+
+        if (isApproved) {
+            if (gameManager.state.money < price) {
+                return this.showToast("Sếp không đủ 💰 để mua món này đâu...", "error");
+            }
+            gameManager.updateMoney(-price);
+            idol.affinity = Math.min(100, (idol.affinity || 0) + 15);
+            idol.stress = Math.max(0, (idol.stress || 0) - 10);
+            this.showToast(`Đã mua ${item} cho ${idol.name}! Hảo cảm tăng mạnh!`, "success");
+            containerElement.innerHTML = `<div style="color: var(--success); font-weight: bold; text-align: center;">Đã vung tiền mua ${item} (${price} 💰)!</div>`;
+            
+            this.appendMessage('model', `Ôi, sếp tuyệt vời quá! Em thích món ${item} này lắm! Cảm ơn sếp yêu~`);
+        } else {
+            idol.affinity = Math.max(0, (idol.affinity || 0) - 20);
+            idol.stress = Math.min(100, (idol.stress || 0) + 15);
+            this.showToast(`Đã từ chối mua ${item}. ${idol.name} tỏ ra rất giận dỗi!`, "error");
+            containerElement.innerHTML = `<div style="color: var(--error); font-weight: bold; text-align: center;">Đã từ chối thẳng thừng!</div>`;
+            
+            this.appendMessage('model', `Gì cơ? Có ${price} tiền mà sếp cũng tiếc với em sao? Thật đáng thất vọng...`);
+        }
+        
+        await dbManager.saveIdolData(idol);
+        this.renderCards();
     },
 
     renderAchievements() {
@@ -1995,6 +2110,8 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
                 status.textContent = "";
                 img.classList.remove('hidden');
                 tools.classList.remove('hidden');
+                const btnPublish = document.getElementById('btn-studio-publish');
+                if (btnPublish) btnPublish.style.display = '';
                 document.getElementById('prompt-display').textContent = `[Technical]: ${result.promptUsed}`;
                 promptContainer.classList.remove('hidden');
                 btn.disabled = false;
@@ -2156,6 +2273,10 @@ Output STRICTLY JSON:
         } catch (e) { window.open(url, '_blank'); }
     },
 
+    openGuide() {
+        document.getElementById('guide-modal').style.display = 'flex';
+    },
+
     async openGallery() {
         const grid = document.getElementById('gallery-grid');
         grid.innerHTML = '';
@@ -2201,7 +2322,7 @@ Output STRICTLY JSON:
                     const idol = cardEngine.getIdol(photo.idolId);
                     const name = idol ? idol.name : 'Unknown';
                     grid.innerHTML += `
-                        <div class="gallery-item" onclick="gameApp.viewGalleryPhoto('${photo.imageUrl}', ${photo.id})" title="Click để phóng to">
+                        <div class="gallery-item" onclick="gameApp.viewGalleryPhoto('${photo.imageUrl ? photo.imageUrl.replace(/'/g, "\\'") : ''}', ${photo.id})" title="Click để phóng to">
                             <img src="${photo.imageUrl}" alt="Shoot" loading="lazy">
                             <div class="gallery-overlay font-mono">${name}</div>
                         </div>
@@ -2254,6 +2375,34 @@ Output STRICTLY JSON:
         document.body.removeChild(a);
     },
 
+    async publishToMuseGramFromStudio() {
+        if (!this.currentRenderSession || !this.currentRenderSession.url) return;
+        let btnPublish = document.getElementById('btn-studio-publish');
+        if (btnPublish) btnPublish.style.display = 'none';
+
+        const idolId = document.getElementById('studio-idol-select').value;
+        const idol = cardEngine.getIdol(idolId);
+        if(!idol) return;
+
+        const photoId = await dbManager.savePhoto(idol.id, this.currentRenderSession.url, this.currentRenderSession.prompt, { published: true });
+        
+        // Cập nhật lại trạng thái saved để không bị đăng trùng
+        this.currentRenderSession.saved = true;
+
+        const photo = {
+            id: photoId,
+            idolId: idol.id,
+            imageUrl: this.currentRenderSession.url,
+            prompt: this.currentRenderSession.prompt,
+            timestamp: Date.now(),
+            published: true
+        };
+        
+        this.showToast("Ảnh đã lưu và đang tải lên MuseGram...", "info");
+
+        this.executeMuseGramPublish(idol, photo, null);
+    },
+
     async publishToMuseGram() {
         if (!this.currentGalleryViewId) return;
         const photo = await dbManager.getPhoto(this.currentGalleryViewId);
@@ -2269,12 +2418,24 @@ Output STRICTLY JSON:
         let btnPublish = document.getElementById('btn-gallery-publish');
         if (btnPublish) btnPublish.disabled = true;
     
+        this.executeMuseGramPublish(idol, photo, btnPublish);
+    },
+
+    async executeMuseGramPublish(idol, photo, btnElement) {
         this.showToast("Đang phân tích phản ứng của cộng đồng mạng...", "info");
     
-        const promptText = `Bạn đang giả lập mạng xã hội "MuseGram". Một người mẫu tên "${idol.name}" (Phong cách: ${idol.concept || "Fashion"}) vừa đăng một bộ ảnh mới. 
+        const visualBonus = (idol.stats.visual > 50) ? (idol.stats.visual - 50) * 0.5 : 0;
+        const scandalBonus = (idol.scandalRisk || 0) * 0.5;
+        let viralChance = 15 + visualBonus + scandalBonus;
+        const isSystemViral = Math.random() * 100 < viralChance;
+        const viralStr = isSystemViral ? "BỨC ẢNH NÀY PHẢI TRỞ THÀNH HIỆN TƯỢNG VIRAL! Tạo ra Fame tăng đột biến nhưng Stress cũng tăng cao do áp lực dư luận." : "Bức ảnh này có phản ứng bình thường hoặc flop.";
+
+        const promptText = `Bạn đang giả lập mạng xã hội "MuseGram". Một người mẫu tên "${idol.name}" (Thuộc tính Tha hóa: ${idol.corruption || 0}/100, Mức độ Căng thẳng: ${idol.stress || 0}/100) vừa đăng một ảnh mới. 
 Mô tả ảnh vừa đăng (bằng tiếng Anh): "${photo.prompt || "cinematic fashion portrait"}".
-Hãy cung cấp 3 bình luận (tiếng Việt) từ 3 người dùng khác nhau phản ứng chân thực về bức ảnh này. Gồm các góc nhìn đa dạng (khen ngợi visual, nhận xét đồ họa/quần áo, hoặc ghen tị/soi mói). 
-Đồng thời cung cấp "fanChange" (số lượng fan tăng/giảm từ -1000 đến +3000 dựa trên độ xuất sắc của ảnh).
+ĐỊNH HƯỚNG BẮT BUỘC: ${viralStr}
+Cung cấp 3 bình luận (tiếng Việt chân thực, trẻ trung, có thể khen ngợi hoặc soi mói) từ 3 cư dân mạng. Nếu Viral, họ có thể phát cuồng hoặc miệt thị gay gắt.
+Cung cấp "fameChange" (Danh tiếng: Viral thì +100 đến +500, Bình thường thì +10 đến +50, Flop thì -10 đến -50).
+Cung cấp "stressChange" (Căng thẳng: Viral tăng +15 đến +40 do áp lực, bình thường +0 đến +10).
 Output CHỈ TRẢ VỀ JSON:
 {
   "comments": [
@@ -2282,9 +2443,11 @@ Output CHỈ TRẢ VỀ JSON:
     { "user": "@username2", "text": "comment text" },
     { "user": "@username3", "text": "comment text" }
   ],
-  "fanChange": 150
+  "fameChange": 150,
+  "stressChange": 20,
+  "isViral": ${isSystemViral}
 }
-Strictly output JSON.`;
+Strictly output JSON only.`;
     
         this.injectKeys();
         try {
@@ -2293,7 +2456,6 @@ Strictly output JSON.`;
             let result = (provider === 'gemini') ? await service.generateContent(promptText) : await service.generateText(promptText);
             
             result = result.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
-            // Handle edge case if AI adds prefix like "Here is the JSON:"
             const jsonStartIndex = result.indexOf('{');
             const jsonEndIndex = result.lastIndexOf('}');
             if(jsonStartIndex !== -1 && jsonEndIndex !== -1) {
@@ -2305,19 +2467,21 @@ Strictly output JSON.`;
             photo.published = true;
             await dbManager.updatePhoto(photo);
     
-            idol.fans = (idol.fans || 0) + (data.fanChange || 50);
-            if (idol.fans < 0) idol.fans = 0;
+            idol.stats.fame = Math.max(0, idol.stats.fame + (data.fameChange || 0));
+            idol.fans = Math.max(0, (idol.fans || 0) + (data.fameChange || 0) * 10);
+            idol.stress = Math.min(100, Math.max(0, (idol.stress || 0) + (data.stressChange || 0)));
+
             await dbManager.saveIdolData(idol);
+            if (typeof cardEngine !== 'undefined' && cardEngine.updateTotalFame) cardEngine.updateTotalFame();
             this.renderCards();
     
             this.showMuseGramResult(idol, photo.imageUrl, data);
     
-            if (btnPublish) btnPublish.style.display = 'none';
-            btnPublish.disabled = false;
+            if (btnElement) btnElement.style.display = 'none';
         } catch (e) {
             console.error(e);
             this.showToast("Không thể kết nối đến MuseGram lúc này.", "error");
-            if (btnPublish) btnPublish.disabled = false;
+            if (btnElement) btnElement.disabled = false;
         }
     },
     
@@ -2328,17 +2492,20 @@ Strictly output JSON.`;
             </div>
         `).join('');
     
-        const fanChangeText = data.fanChange >= 0 ? `<span style="color: #34d399;">+${data.fanChange} Fans</span>` : `<span style="color: #ef4444;">${data.fanChange} Fans</span>`;
+        const fameChangeText = data.fameChange >= 0 ? `<span style="color: #34d399;">+${data.fameChange} Fame</span>` : `<span style="color: #ef4444;">${data.fameChange} Fame</span>`;
+        const stressChangeText = data.stressChange > 0 ? `<span style="color: #ef4444;">+${data.stressChange} Stress</span>` : `<span style="color: #34d399;">${data.stressChange} Stress</span>`;
+        const viralBadge = data.isViral ? `<div style="display:inline-block; background:#ef4444; color:white; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:12px; margin-bottom:10px; animation: pulse 1.5s infinite;">🔥 VIRAL SENSATION 🔥</div>` : ``;
     
         this.showDialog({
             title: `📱 MuseGram: ${idol.name}`,
             message: `
                 <div style="text-align: center; margin-bottom: 20px;">
-                    <img src="${photoUrl}" style="max-height: 200px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                    ${viralBadge}
+                    <img src="${photoUrl}" style="max-height: 200px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 100%; object-fit: cover;">
                 </div>
-                <div style="margin-bottom: 15px;">
-                    <strong style="color:var(--text-main);">Hiệu ứng mạng xã hội:</strong> ${fanChangeText}
-                    <div style="font-size: 11px; color: var(--gold); margin-top: 4px;">Tổng Fans hiện tại: ${idol.fans || 0}</div>
+                <div style="margin-bottom: 15px; display:flex; justify-content: space-around; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;">
+                    <div><strong>Danh tiếng:</strong> ${fameChangeText}</div>
+                    <div><strong>Áp lực:</strong> ${stressChangeText}</div>
                 </div>
                 <div>
                     <strong style="color:var(--text-muted); font-size: 12px; text-transform: uppercase;">Bình luận nổi bật:</strong>

@@ -49,6 +49,30 @@ class CardEngine {
     getIdol(id) { return this.roster.get(id); }
     getAllIdols() { return Array.from(this.roster.values()); }
 
+    addExp(id, expAdded) {
+        const idol = this.roster.get(id);
+        if (!idol) return false;
+        idol.exp = (idol.exp || 0) + expAdded;
+        let leveledUp = false;
+        while (idol.exp >= 100) {
+            idol.level = (idol.level || 1) + 1;
+            idol.exp -= 100;
+            leveledUp = true;
+        }
+        return leveledUp;
+    }
+
+    updateTotalFame() {
+        let totalFame = 0;
+        for (const idol of this.roster.values()) {
+            totalFame += idol.stats.fame || 0;
+            totalFame += (idol.fans || 0) / 1000; // rough translation of fans to fame
+        }
+        if (typeof gameManager !== 'undefined') {
+            gameManager.checkAchievement('STATS_UPDATE', { fame: totalFame });
+        }
+    }
+
     async updateAvatar(id, newImageUrl) {
         const idol = this.roster.get(id);
         if (idol) {

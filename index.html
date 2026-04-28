@@ -16,21 +16,23 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <div class="version-tag">MUSE ARCHITECT STUDIO</div>
-            <h1>MUSE<br>ARCHITECT</h1>
+            <div class="sidebar-title-group">
+                <div class="version-tag gradient-text" style="font-weight: bold;">v2.1: THE SOCIAL CANVAS</div>
+                <h1>MUSE<br>ARCHITECT</h1>
+            </div>
+            
+            <div class="global-resources-mobile">
+                <div class="resource-pill" title="Ngân sách (Dùng để Scout và chụp ảnh)">
+                    <span class="icon">💰</span>
+                    <span id="ui-money" class="value font-mono style-bold">5000</span>
+                </div>
+                <div class="resource-pill diamond" title="Kim cương (Phần thưởng từ thành tựu)">
+                    <span class="icon">💎</span>
+                    <span id="ui-diamonds" class="value font-mono style-bold">50</span>
+                </div>
+            </div>
         </div>
         
-        <div class="resources-sidebar" title="Tài nguyên hệ thống dùng để duy trì hoạt động Studio">
-            <div class="resource-pill" title="Ngân sách (Dùng để Scout và chụp ảnh)">
-                <span class="icon">💰</span>
-                <span id="ui-money" class="value font-mono">5000</span>
-            </div>
-            <div class="resource-pill diamond" title="Kim cương (Phần thưởng từ thành tựu, dùng cho tính năng cao cấp)">
-                <span class="icon">💎</span>
-                <span id="ui-diamonds" class="value font-mono">50</span>
-            </div>
-        </div>
-
         <nav class="main-nav">
             <button id="nav-btn-map" class="nav-btn active" onclick="gameApp.switchView('map')" title="Bản đồ thành phố">
                 <span>🗺️</span> BẢN ĐỒ TP
@@ -64,6 +66,7 @@
         <div class="sidebar-footer">
             <button class="nav-btn-small" onclick="gameApp.openGallery()" title="Mở kho lưu trữ hình ảnh (Gallery)">🖼️ Gallery</button>
             <button class="nav-btn-small" onclick="gameApp.toggleSettings(true)" title="Cấu hình hệ thống (Settings)">⚙️ Setting</button>
+            <button class="nav-btn-small" onclick="gameApp.openGuide()" title="Hướng dẫn chơi">📖 Hướng dẫn</button>
         </div>
     </aside>
 
@@ -327,6 +330,7 @@
                     <div id="studio-status" class="status-overlay">Waiting for Art Direction...</div>
                     
                     <div id="studio-tools" class="studio-tools hidden">
+                        <button class="tool-btn" id="btn-studio-publish" onclick="gameApp.publishToMuseGramFromStudio()" title="Đăng ngay lên MuseGram">🌐</button>
                         <button class="tool-btn" onclick="gameApp.setAsAvatar()" title="Đặt làm Ảnh đại diện">👤</button>
                         <button class="tool-btn" onclick="gameApp.saveToGallery()" title="Lưu vào Kho Ảnh">💾</button>
                         <button class="tool-btn" onclick="gameApp.downloadImage()" title="Tải xuống thiết bị">⬇️</button>
@@ -442,6 +446,40 @@
     </div>
 </div>
 
+<!-- GUIDE MODAL -->
+<div id="guide-modal" class="modal">
+    <div class="modal-content settings-content" style="max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h2>📖 HƯỚNG DẪN CHƠI CƠ BẢN</h2>
+            <button class="btn-icon" onclick="document.getElementById('guide-modal').style.display='none'">✕</button>
+        </div>
+        <div class="guide-body mt-10 text-main" style="line-height: 1.6; font-size: 14px;">
+            <h3 style="color: var(--gold); margin-top: 15px;">1. Mục Tiêu Trò Chơi</h3>
+            <p>Bạn là một giám đốc công ty đào tạo người mẫu (Agency HQ). Nhiệm vụ của bạn là chiêu mộ (Scout), huấn luyện, và đưa các Model trẻ trở thành những ngôi sao hạng A (Fame cao, Visual hoàn hảo).</p>
+
+            <h3 style="color: var(--gold); margin-top: 15px;">2. Các Chỉ Số Quan Trọng</h3>
+            <ul style="padding-left: 20px;">
+                <li><strong>💰 Tiền (Ngân sách):</strong> Dùng để chiêu mộ Model mới, tổ chức chụp ảnh, mua sắm và đi Spa. Kiếm được thông qua nhận Hợp đồng (Jobs) hoặc Đấu trường Kols.</li>
+                <li><strong>💎 Kim Cương:</strong> Đơn vị cao cấp, nhận được khi đạt các Thành Tựu.</li>
+                <li><strong>Fame (Nhận diện):</strong> Chỉ số quyết định đẳng cấp Model. Fame cao mới có thể nhận hợp đồng lớn và quảng cáo VIP.</li>
+                <li><strong>Stress (Căng thẳng):</strong> Làm việc (Jobs) hoặc Tham gia "Thế giới ngầm" sẽ tăng Stress. Stress cao làm giảm hiệu suất, tăng nguy cơ khủng hoảng. Cần cho Model đi Spa để giảm Stress.</li>
+                <li><strong>Tha Hóa (Corruption):</strong> Tăng lên nếu ép Model làm việc quá sức, phẫu thuật thẩm mỹ quá đà, hoặc ký "Hợp Đồng Hắc Ám". Tha hóa quá cao (100) sẽ biến Model thành "Thực thể bóng tối" (Dark Muse).</li>
+                <li><strong>Hảo Cảm (Affinity):</strong> Thể hiện độ thân thiết giữa Sếp (bạn) và Model. Quà tặng hoặc trò chuyện vui vẻ tăng Hảo cảm. Khước từ vòi vĩnh sẽ làm giảm Hảo cảm.</li>
+            </ul>
+
+            <h3 style="color: var(--gold); margin-top: 15px;">3. Tương Tác Qua AI Chat</h3>
+            <p>Trong "Hồ Sơ Model", bạn có thể bấm "TRÒ CHUYỆN" để chat trực tiếp với Model qua AI. Tính cách, cách xưng hô và cảm xúc của Model bị ảnh hưởng bởi chỉ số Tha Hóa, Hảo Cảm và Stress hiện tại.</p>
+            <p>Model thỉnh thoảng sẽ "vòi vĩnh" quà cáp. Nếu đồng ý mua (tốn 💰), Hảo cảm tăng rất nhanh; nếu từ chối, cô ấy sẽ rất giận dỗi!</p>
+
+            <h3 style="color: var(--gold); margin-top: 15px;">4. Chụp Ảnh & Sinh Thành Quả (The Studio)</h3>
+            <p>Tại The Studio, bạn có thể thiết lập các bộ ảnh (Prompt AI). Bức ảnh tạo ra có thể lưu vào Gallery, dùng làm Avatar, hoặc đăng lên mạng xã hội MuseGram để tạo Viral và thu hút Fan hâm mộ!</p>
+
+            <h3 style="color: var(--gold); margin-top: 15px;">5. Cẩn Thận Với "Thế Giới Ngầm" (Underground)</h3>
+            <p>Một tính năng nguy hiểm: Sếp có thể "bán rẻ" (Phẫu thuật chợ đen, Hợp đồng hắc ám...) để đổi lấy số tiền cực lớn trong chớp mắt. Tuy nhiên, rủi ro là chỉ số Tha hóa và Stress tăng vọt kịch trần, làm hỏng hoàn toàn sự nghiệp tương lai của Model!</p>
+        </div>
+    </div>
+</div>
+
 <div id="gallery-modal" class="modal">
     <div class="modal-content gallery-content">
         <div class="modal-header">
@@ -477,7 +515,7 @@
 </div>
 
 <div id="chat-modal" class="modal">
-    <div class="modal-content chat-content">
+    <div class="modal-content chat-content" style="transition: all 0.5s ease; background-size: cover; background-position: center;">
         <div class="modal-header">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <img id="chat-avatar" src="" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">

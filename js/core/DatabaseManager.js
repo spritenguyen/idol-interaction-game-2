@@ -44,7 +44,7 @@ class DatabaseManager {
         });
     }
 
-    async savePhoto(idolId, imageUrl, fullPrompt) {
+    async savePhoto(idolId, imageUrl, fullPrompt, opts = {}) {
         if (!this.db) await this.init();
         if (!this.db) return false;
 
@@ -52,8 +52,8 @@ class DatabaseManager {
             try {
                 const transaction = this.db.transaction(['gallery'], 'readwrite');
                 const store = transaction.objectStore('gallery');
-                const request = store.add({ idolId, imageUrl, prompt: fullPrompt, timestamp: Date.now() });
-                request.onsuccess = () => resolve(true);
+                const request = store.add({ idolId, imageUrl, prompt: fullPrompt, timestamp: Date.now(), ...opts });
+                request.onsuccess = () => resolve(request.result);
                 request.onerror = () => reject(false);
             } catch (e) { resolve(false); }
         });

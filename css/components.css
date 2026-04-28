@@ -68,6 +68,9 @@ body {
 .sidebar-header {
     margin-bottom: 32px;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .sidebar-header h1 {
@@ -219,6 +222,35 @@ body {
     margin: 0;
 }
 
+/* Global Resources (Desktop vs Mobile) */
+.global-resources-mobile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    background: rgba(30, 30, 30, 0.5); /* Slightly transparent surface */
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+
+.global-resources-mobile .resource-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    color: var(--text-main);
+}
+
+.global-resources-mobile .resource-pill .value {
+    font-weight: 700;
+}
+
+.global-resources-mobile .resource-pill.diamond .value {
+    color: var(--gold);
+}
+
 /* Base Blocks */
 .glass-panel {
     background: var(--bg-surface);
@@ -233,7 +265,7 @@ body {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     background: rgba(0,0,0,0.85); 
     backdrop-filter: blur(8px);
-    display: none; align-items: center; justify-content: center; z-index: 1000; 
+    display: none; align-items: center; justify-content: center; z-index: 2000; 
     padding: 20px;
 }
 .modal-content { 
@@ -359,41 +391,87 @@ select option {
 @media (max-width: 850px) {
     .app-layout {
         flex-direction: column;
-        overflow-y: auto;
+        overflow-y: hidden;
         overflow-x: hidden;
+        height: 100vh;
+        height: 100dvh;
     }
     .sidebar {
         width: 100%;
         height: auto;
-        padding: 16px;
+        padding: 10px 12px;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
         flex-shrink: 0;
+        z-index: 100;
     }
-    .main-content {
-        height: auto;
-        overflow-y: visible;
-        overflow-x: hidden;
-        padding: 16px 12px;
+    .sidebar-header {
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .sidebar-title-group {
+        flex: 1;
+        max-width: 60%;
     }
     .sidebar-header h1 {
-        font-size: 24px;
+        font-size: 18px;
+        letter-spacing: 2px;
+        margin: 0;
+        max-width: 100%;
+    }
+    .sidebar-header h1 br {
+        display: none;
+    }
+    .version-tag {
+        font-size: 10px;
+        margin-bottom: 2px;
+    }
+    .main-content {
+        flex: 1;
+        height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 12px 8px;
+        position: relative;
     }
     .main-nav {
         display: flex;
         flex-direction: row;
         overflow-x: auto;
-        gap: 8px;
-        padding-bottom: 8px;
+        gap: 6px;
+        padding-bottom: 4px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .main-nav::-webkit-scrollbar {
+        height: 0;
+        display: none;
     }
     .nav-btn {
-        padding: 10px 16px;
+        padding: 8px 12px;
         white-space: nowrap;
         flex: 0 0 auto;
+        font-size: 12px;
+        gap: 6px;
+    }
+    .nav-btn span {
+        font-size: 14px;
     }
     .sidebar-footer {
         flex-direction: row;
-        margin-top: 16px;
+        margin-top: 0;
+        display: flex;
+        gap: 8px;
+    }
+    .sidebar-footer .nav-btn-small {
+        flex: 1;
+        text-align: center;
+        padding: 6px;
+        font-size: 11px;
     }
     .grid-2-cols,
     .underground-layout,
@@ -547,6 +625,12 @@ select option {
 @keyframes messageSlide {
     from { opacity: 0; transform: translateY(10px) scale(0.95); }
     to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 .chat-input-area {
