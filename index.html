@@ -11,6 +11,7 @@
 <body data-font="be-vietnam">
 
 <div id="toast-container"></div>
+<div id="task-queue-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px;"></div>
 
 <div class="app-layout">
     <!-- Sidebar Navigation -->
@@ -267,7 +268,7 @@
                     <h2>🏙️ KHU CĂN HỘ</h2>
                     <p class="view-desc">Không gian riêng tư của Model. Thăm, trò chuyện tâm tình và tặng quà tăng hảo cảm.</p>
                 </div>
-                <button class="btn-action w-full" style="background: linear-gradient(90deg, #d946ef, #9333ea); color: white; border: 1px solid #e879f9; font-weight: bold; max-width: 200px;" onclick="gameApp.organizeDormParty()">🎉 DORM PARTY</button>
+                <button class="btn-action w-full" style="background: linear-gradient(90deg, #d946ef, #9333ea); color: white; border: 1px solid #e879f9; font-weight: bold; max-width: 200px;" onclick="gameApp.organizeDormParty(this)">🎉 DORM PARTY</button>
             </div>
             <div class="shop-grid" id="condo-grid">
                 <!-- Rendered via JS -->
@@ -301,19 +302,19 @@
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                     <div style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; text-align: center; background: rgba(0,0,0,0.3);">
                         <h4 style="color:var(--text-main); margin-bottom: 5px;">STREET CASTING</h4>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 10px;">Tìm kiếm Idol đường phố. Tiềm năng ngẫu nhiên.</p>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 10px;">Tìm kiếm Idol đường phố. Mở khóa từ Level 1.</p>
                         <button id="btn-scout-1" class="btn-action w-full" style="background:var(--bg-elevated); border:1px solid #4ade80; color:#4ade80;" onclick="gameApp.triggerAIScout('street')">🔍 CASTING (1K 💰)</button>
                     </div>
 
                     <div style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; text-align: center; background: rgba(0,0,0,0.3);">
                         <h4 style="color:var(--primary); margin-bottom: 5px;">PRO AUDITION</h4>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 10px;">Tổ chức Audition chuyên nghiệp. Chỉ số cơ bản tốt.</p>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 10px;">Tuyển chọn quy mô lớn. Yêu cầu: Đội hình có 1 Model hạng C.</p>
                         <button id="btn-scout-2" class="btn-action w-full" style="background:var(--bg-elevated); border:1px solid var(--primary); color:var(--primary);" onclick="gameApp.triggerAIScout('pro')">💎 CASTING (5K 💰)</button>
                     </div>
 
                     <div style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; text-align: center; background: linear-gradient(145deg, rgba(212,175,55,0.1), rgba(0,0,0,0.4));">
                         <h4 style="color:var(--gold); margin-bottom: 5px;">GLOBAL HUNT</h4>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 10px;">Tuyển mộ nhân tài thế giới. Tỉ lệ trúng Siêu Sao cực cao.</p>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 10px;">Chiến dịch toàn cầu. Yêu cầu: Đội hình có 1 Model hạng A.</p>
                         <button id="btn-scout-3" class="btn-action w-full" style="background:var(--bg-elevated); border:1px solid var(--gold); color:var(--gold); font-weight:bold;" onclick="gameApp.triggerAIScout('global')">👑 VIP CASTING (100 💎)</button>
                     </div>
                 </div>

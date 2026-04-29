@@ -43,12 +43,12 @@ class StudioDirector {
         ${emotionalContext}
         
         INSTRUCTIONS:
-        1. Contextual Scene Setup: Parse the user's creative vision. If they described an outfit, location, or mood, integrate it perfectly with the overarching concept.
-        2. Priority Framing: VERY IMPORTANT - Prioritize FULL-BODY SHOTS unless the user specifies otherwise.
+        1. Contextual Scene Setup: Parse the user's creative vision. If they described an outfit, location, pose, or mood, integrate it perfectly with the overarching concept.
+        2. Priority Framing: VERY IMPORTANT - Frame the shot according to the user's pose/vision (e.g. if close-up, do not use full-body). If no specific pose/framing is mentioned, prioritize FULL-BODY SHOTS.
         
         OUTPUT STRICTLY IN JSON FORMAT DO NOT OUTPUT MARKDOWN. JSON format:
         {
-          "visualPrompt": "[Cinematic English prompt containing: Subject, Outfit, Pose, Background, Lighting${extraPrompts}]",
+          "visualPrompt": "[Cinematic English prompt containing: Subject, Outfit, Pose, Background, Framing, Lighting${extraPrompts}]",
           "technicalSpecs": "Camera: [Model], Lens: [Focal Length]mm f/[Aperture], Look: [Style]"
         }`;
 
