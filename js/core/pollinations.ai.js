@@ -4,7 +4,7 @@ class PollinationsService {
         this.textModels = ['grok', 'gemini-fast'];
         this.currentTextModelIndex = 0;
         
-        this.imageModels = ['flux', 'zimage', 'qwen-image', 'wan-image'];
+        this.imageModels = ['flux', 'zimage', 'qwen-image', 'gptimage-large'];
         this.currentImageModelIndex = 0;
         
         this.endpoints = {

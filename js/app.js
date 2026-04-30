@@ -18,6 +18,10 @@ const gameApp = {
             const idolId = this.pendingScandalCrisis;
             this.pendingScandalCrisis = null;
             this.triggerScandalCrisis(idolId);
+        } else if (this.pendingHeadhunting) {
+            const idolId = this.pendingHeadhunting;
+            this.pendingHeadhunting = null;
+            this.triggerHeadhunting(idolId);
         }
     },
 
@@ -30,6 +34,20 @@ const gameApp = {
         delete this.activeTasks[id];
         this.renderTaskQueue();
         setTimeout(() => this.checkPendingEvents(), 500);
+    },
+
+    modifyIdolPhysique(idol, key, delta) {
+        if (!idol || !idol.measurements) return;
+        let m = idol.measurements;
+        if (!m[key] || m[key] === "?") return;
+        let currentStr = m[key].toString();
+        let match = currentStr.match(/\d+(\.\d+)?/);
+        if (match) {
+            let num = parseFloat(match[0]);
+            let newVal = Math.max(10, num + delta);
+            newVal = Math.round(newVal * 10) / 10;
+            m[key] = currentStr.replace(match[0], newVal);
+        }
     },
 
     isTaskRunning(id) {
@@ -47,41 +65,39 @@ const gameApp = {
         container.innerHTML = '';
         const taskKeys = Object.keys(this.activeTasks);
         if (taskKeys.length > 0) {
-            const bell = document.createElement('div');
-            bell.style = `background:var(--bg-elevated); padding:8px 12px; border-radius:var(--radius-full); display:flex; align-items:center; gap:8px; align-self:flex-end; box-shadow:0 4px 10px rgba(0,0,0,0.5); cursor:pointer; border:1px solid var(--primary);`;
-            bell.innerHTML = `
-                <span style="font-size:18px; animation:shake 1.5s infinite;">🔔</span>
-                <span style="background:var(--error); color:white; font-size:11px; font-weight:bold; padding:2px 6px; border-radius:10px;">${taskKeys.length}</span>
+            const wrapper = document.createElement('div');
+            wrapper.style = `
+                background: rgba(15, 23, 42, 0.85);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(251, 191, 36, 0.5);
+                padding: 10px 20px;
+                border-radius: var(--radius-full);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 15px rgba(251, 191, 36, 0.15);
+                color: #e2e8f0;
+                font-size: 14px;
+                pointer-events: none;
+                animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             `;
-            container.appendChild(bell);
             
-            Object.entries(this.activeTasks).forEach(([taskId, taskName]) => {
-                const el = document.createElement('div');
-                el.style = `
-                    background: var(--bg-surface);
-                    border-left: 4px solid var(--primary);
-                    padding: 10px 15px;
-                    border-radius: var(--radius-md);
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-                    color: var(--text-main);
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    font-size: 13px;
-                    animation: slideInRight 0.3s ease-out;
-                `;
-                el.innerHTML = `
-                    <div style="width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <span>${taskName}</span>
-                `;
-                container.appendChild(el);
-            });
+            const firstTaskName = this.activeTasks[taskKeys[0]];
+            const taskText = taskKeys.length > 1 ? `Hệ thống AI đang nội suy ${taskKeys.length} tiến trình...` : firstTaskName;
+
+            wrapper.innerHTML = `
+                <div style="width: 18px; height: 18px; border: 2px solid rgba(251, 191, 36, 0.3); border-top: 2px solid var(--gold); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <span style="font-weight: 500; letter-spacing: 0.5px;">🪄 ${taskText}</span>
+            `;
+
+            container.appendChild(wrapper);
         }
         
         if (!document.getElementById('task-queue-style')) {
             const style = document.createElement('style');
             style.id = 'task-queue-style';
             style.innerHTML = `
+                @keyframes popIn { 0% { transform: scale(0.9) translateY(-10px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
                 @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
                 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                 @keyframes shake { 0%, 100% {transform: rotate(0deg);} 25% {transform: rotate(15deg);} 75% {transform: rotate(-15deg);} }
@@ -154,6 +170,7 @@ const gameApp = {
         if(viewName === 'jobs') this.renderJobs();
         if(viewName === 'spa') this.renderSpa();
         if(viewName === 'underground') this.renderUndergroundRoster();
+        if(viewName === 'rivals') this.generateRivalsLeaderboard();
         if(viewName === 'condo') {
             this.renderCondo();
             this.checkCondoNightEvent();
@@ -234,36 +251,57 @@ const gameApp = {
         const idol = cardEngine.getIdol(this.currentUgModelId);
         if(!idol) return;
 
-        const confirmBuy = confirm(`MUA VÀ ÁP DỤNG NGAY: ${item.name} cho ${idol.name}?\nGiá: ${item.price}💰\nChi tiết: ${item.desc}\n\nĐây là giao dịch Không Hoàn Lại.`);
-        if (!confirmBuy) return;
-
-        gameManager.updateMoney(-item.price);
-        
-        idol.scandalRisk = idol.scandalRisk || 0;
-        idol.corruption = idol.corruption || 0;
-        idol.stress = idol.stress || 0;
-        idol.affinity = idol.affinity || 30;
-
-        if (item.type === 'bm_visual') {
-            idol.stats.visual = Math.min(100, idol.stats.visual + item.effect);
-            idol.scandalRisk = Math.min(100, idol.scandalRisk + 15);
-            idol.corruption = Math.min(100, idol.corruption + 20);
-        } else if (item.type === 'bm_brainwash') {
-            idol.stress = 0;
-            idol.affinity = Math.max(0, idol.affinity - 30);
-            idol.corruption = Math.min(100, idol.corruption + 30);
-            idol.scandalRisk = Math.min(100, idol.scandalRisk + 10);
-        } else if (item.type === 'bm_fame') {
-            idol.stats.fame += item.effect;
-            cardEngine.updateTotalFame(); // Cập nhật fame tổng
-            idol.scandalRisk = Math.min(100, idol.scandalRisk + 25);
-        } else if (item.type === 'bm_wipe') {
-            idol.scandalRisk = Math.max(0, idol.scandalRisk + item.effect);
+        if (item.type === 'bm_wipe' && (idol.scandalRisk || 0) <= 0) {
+            return this.showToast("Model này đang không có nguy cơ scandal nào!", "info");
+        }
+        if (item.type === 'bm_brainwash' && (idol.stress || 0) <= 0) {
+            return this.showToast("Model này không bị Căng thẳng!", "info");
         }
 
-        dbManager.saveIdolData(idol);
-        this.renderUndergroundRoster();
-        this.showToast(`Áp dụng ${item.name} cho ${idol.name} thành công.`, "error"); // Hiện Toast đỏ
+        this.showDialog({
+            title: "XÁC NHẬN GIAO DỊCH NGẦM",
+            message: `MUA VÀ ÁP DỤNG NGAY: <strong>${item.name}</strong> cho <strong>${idol.name}</strong>?<br>Giá: ${item.price}💰<br>Chi tiết: ${item.desc}<br><br><span style="color:var(--error);">Đây là giao dịch Không Hoàn Lại.</span>`,
+            type: "confirm",
+            onConfirm: () => {
+                gameManager.updateMoney(-item.price);
+                
+                idol.scandalRisk = idol.scandalRisk || 0;
+                idol.corruption = idol.corruption || 0;
+                idol.stress = idol.stress || 0;
+                idol.affinity = idol.affinity || 30;
+
+                if (item.type === 'bm_visual') {
+                    idol.stats.visual = Math.min(100, idol.stats.visual + item.effect);
+                    idol.scandalRisk = Math.min(100, idol.scandalRisk + 15);
+                    idol.corruption = Math.min(100, idol.corruption + 20);
+                } else if (item.type === 'bm_brainwash') {
+                    idol.stress = 0;
+                    idol.affinity = Math.max(0, idol.affinity - 30);
+                    idol.corruption = Math.min(100, idol.corruption + 30);
+                    idol.scandalRisk = Math.min(100, idol.scandalRisk + 10);
+                } else if (item.type === 'bm_fame') {
+                    idol.stats.fame += item.effect;
+                    cardEngine.updateTotalFame(); // Cập nhật fame tổng
+                    idol.scandalRisk = Math.min(100, idol.scandalRisk + 25);
+                    idol.stats.scandal_risk = idol.scandalRisk;
+                } else if (item.type === 'bm_wipe') {
+                    idol.scandalRisk = Math.max(0, idol.scandalRisk + item.effect);
+                } else if (item.type === 'bm_sabotage_rivals') {
+                    idol.scandalRisk = Math.min(100, idol.scandalRisk + 10);
+                    setTimeout(() => {
+                        this.showToast("Bóc phốt thành công! Các đối thủ trên BXH đã bị giảm Fame đáng kể.", "success");
+                        // Refresh the leaderboard randomly but in player's favor
+                        this.generateRivalsLeaderboard(true);
+                    }, 500);
+                }
+
+                idol.stats.scandal_risk = idol.scandalRisk;
+                dbManager.saveIdolData(idol);
+                this.renderUndergroundRoster();
+                this.refreshUI(idol.id); // Sync all views
+                this.showToast(`Áp dụng ${item.name} cho ${idol.name} thành công.`, "error"); // Hiện Toast đỏ
+            }
+        });
     },
 
     selectUndergroundModel(id, btn) {
@@ -322,35 +360,151 @@ const gameApp = {
             moneyReward = 30000; stressCost = 40; corrGain = 25; affinityCost = 20; scandalCost = 20;
         }
 
-        const confirmJob = confirm(`XÁC NHẬN GIAN LẬP / CÔNG VIỆC NGẦM: ${jobName}\nModel: ${idol.name}\n\nHậu quả:\n- Căng thẳng: +${stressCost}\n- Tha hóa: +${corrGain}\n${affinityCost > 0 ? `- Hảo cảm: -${affinityCost}\n` : ''}- Scandal Risk: +${scandalCost}%\n- TIỀN THƯỞNG: +${moneyReward} 💰\n\nBạn có chắc chắn muốn đẩy cô ấy vào vũng lầy này?`);
-        
-        if (confirmJob) {
-            gameManager.updateMoney(moneyReward);
-            idol.stress = stress + stressCost;
-            if (idol.stress > 100) idol.stress = 100;
-            
-            idol.corruption = corr + corrGain;
-            if (idol.corruption > 100) idol.corruption = 100;
-            
-            idol.scandalRisk = (idol.scandalRisk || 0) + scandalCost;
-            if (idol.scandalRisk >= 100) {
-                idol.scandalRisk = 100;
-                this.showToast(`CẢNH BÁO: ${idol.name} ĐÃ BỊ PHONG SÁT DO LỘ SCANDAL NGHIÊM TRỌNG!`, "error");
+        this.showDialog({
+            title: "XÁC NHẬN GIAN LẬP / CÔNG VIỆC NGẦM",
+            message: `<strong>Công việc:</strong> ${jobName}<br><strong>Model:</strong> ${idol.name}<br><br><strong>Hậu quả:</strong><br>- Căng thẳng: <span style="color:var(--error);">+${stressCost}</span><br>- Tha hóa: <span style="color:var(--error);">+${corrGain}</span><br>${affinityCost > 0 ? `- Hảo cảm: <span style="color:var(--error);">-${affinityCost}</span><br>` : ''}- Scandal Risk: <span style="color:var(--error);">+${scandalCost}%</span><br><br><strong>TIỀN THƯỞNG:</strong> <strong style="color:var(--success);">+${moneyReward} 💰</strong><br><br>Bạn có chắc chắn muốn đẩy cô ấy vào vũng lầy này?`,
+            type: "confirm",
+            onConfirm: () => {
+                gameManager.updateMoney(moneyReward);
+                idol.stress = stress + stressCost;
+                if (idol.stress > 100) idol.stress = 100;
+                
+                idol.corruption = corr + corrGain;
+                if (idol.corruption > 100) idol.corruption = 100;
+                
+                idol.scandalRisk = (idol.scandalRisk || 0) + scandalCost;
+                if (idol.scandalRisk >= 100) {
+                    idol.scandalRisk = 100;
+                    this.showToast(`CẢNH BÁO: ${idol.name} ĐÃ BỊ PHONG SÁT DO LỘ SCANDAL NGHIÊM TRỌNG!`, "error");
+                }
+                idol.stats.scandal_risk = idol.scandalRisk;
+
+                idol.affinity = affinity - affinityCost;
+                if (idol.affinity < 0) idol.affinity = 0;
+
+                if (idol.corruption >= 100 && (!idol.concept || !idol.concept.includes("Dark Muse"))) {
+                    idol.concept = (idol.concept || '') + " | Dark Muse";
+                    this.showToast(`CẢNH BÁO: ${idol.name} ĐÃ BỊ THA HÓA HOÀN TOÀN TRỞ THÀNH DARK MUSE!`, "error");
+                }
+
+                dbManager.saveIdolData(idol);
+                setTimeout(() => {
+                    this.renderUndergroundRoster();
+                    this.refreshUI(idol.id); // Sync all views
+                }, 100);
+                this.showToast(`Hoàn thành ${jobName}! Nhận ${moneyReward}💰`, "success");
             }
+        });
+    },
 
-            idol.affinity = affinity - affinityCost;
-            if (idol.affinity < 0) idol.affinity = 0;
+    /* ======================================================================
+       RIVAL AGENCIES & AI SHOWBIZ LOGIC
+       ====================================================================== */
+    
+    async generateRivalNews() {
+        const eventsContainer = document.getElementById('rivals-events');
+        if (!eventsContainer) return;
 
-            if (idol.corruption >= 100 && (!idol.concept || !idol.concept.includes("Dark Muse"))) {
-                idol.concept = (idol.concept || '') + " | Dark Muse";
-                this.showToast(`CẢNH BÁO: ${idol.name} ĐÃ BỊ THA HÓA HOÀN TOÀN TRỞ THÀNH DARK MUSE!`, "error");
-            }
+        const provider = document.getElementById('logic-provider').value;
+        const service = (provider === 'gemini') ? geminiService : pollinationsService;
 
-            dbManager.saveIdolData(idol);
-            setTimeout(() => this.renderUndergroundRoster(), 100);
-            this.showToast(`Hoàn thành ${jobName}! Nhận ${moneyReward}💰`, "success");
+        eventsContainer.innerHTML = '<p style="color:var(--text-muted); font-size: 13px; text-align: center;"><span class="loading-spinner"></span> Trí tuệ nhân tạo đang phân tích Showbiz Data...</p>';
+        this.startTask('fetch_rival_news', 'Đang cập nhật Radar Đối thủ...');
+
+        const prompt = `Bạn là một AI quản lý rủi ro trong ngành giải trí showbiz. Hãy tạo ra 1 tin tức/biến cố ngắn về một (hoặc nhiều) "Agency đối thủ" đang tranh giành thị phần với công ty của người chơi. Tên các đối thủ ngẫu nhiên có thể là: "Starfall Agency", "Onyx Entertainment", "Aurora Models"...
+        Output một JSON object DUY NHẤT:
+        {
+           "headline": "Tiêu đề tin tức (gây cấn, giật gân, ví dụ: 'Starfall Agency cướp hợp đồng tỷ đô!')",
+           "content": "Mô tả chi tiết biến cố. Nêu rõ động thái của đối thủ, hoặc một scandal để người chơi có thể đục nước béo cò, hoặc một chiến tranh lạnh về thời trang.",
+           "action_type": "sabotage" | "opportunity" | "threat",
+           "suggestion": "Gợi ý 1 hành động/tính năng cho người chơi (ví dụ: 'Yêu cầu Model cày Affinity để chống lại đối thủ', 'Triển khai dự án ảnh mới để chiếm viral')"
+        }
+        Trả về đúng định dạng JSON, không có code block markdown.`;
+
+        try {
+            let jsonString = (provider === 'gemini') ? await service.generateContent(prompt) : await service.generateText(prompt);
+            jsonString = jsonString.replace(/```json/gi, "").replace(/```/g, "").trim();
+            const data = JSON.parse(jsonString);
+
+            let actionColor = "var(--primary)";
+            if (data.action_type === "sabotage" || data.action_type === "threat") actionColor = "var(--error)";
+
+            eventsContainer.innerHTML = `
+                <div style="background: rgba(40,10,10,0.5); padding: 15px; border-radius: 8px; border: 1px solid ${actionColor}; margin-bottom: 12px; position:relative; overflow:hidden;">
+                    <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:${actionColor};"></div>
+                    <h4 style="color: ${actionColor}; margin: 0 0 8px 10px; font-size: 14px;">${data.headline}</h4>
+                    <p style="color: var(--text-main); font-size: 13px; margin-left: 10px; margin-bottom: 10px; line-height:1.5;">${data.content}</p>
+                    <div style="background: rgba(0,0,0,0.4); padding: 10px; margin-left: 10px; border-radius: 6px; font-size: 12px;">
+                        <span style="color:var(--gold);">💡 AI Đề xuất:</span> <br><span style="color:var(--text-muted);">${data.suggestion}</span>
+                    </div>
+                    <div style="margin-top: 12px; display:flex; justify-content: flex-end;">
+                        <button class="btn-action w-full" style="border:1px solid ${actionColor}; color:${actionColor}; background:transparent;" onclick="gameApp.switchView('studio')">ĐÁP TRẢ BẰNG PHOTOSHOOT</button>
+                    </div>
+                </div>
+            `;
+            
+            // Randomly update leaderboard when event happens
+            this.generateRivalsLeaderboard();
+
+        } catch (error) {
+            console.error("Rival gen fail:", error);
+            eventsContainer.innerHTML = `<p style="color:var(--error); text-align:center;">Lỗi đường truyền Radar Showbiz. Thử lại sau.</p>`;
+        } finally {
+            this.endTask('fetch_rival_news');
         }
     },
+
+    async generateRivalsLeaderboard(sabotaged = false) {
+        const lbContainer = document.getElementById('rivals-leaderboard');
+        if (!lbContainer) return;
+
+        // Giả lập điểm của mình bằng cách lấy tổng fans
+        let myTotalFans = 0;
+        let myTotalFame = 0;
+        cardEngine.getAllIdols().forEach(id => {
+            myTotalFans += (id.fans || 0);
+            myTotalFame += (id.stats?.visual || 0) + (id.stats?.charm || 0);
+        });
+
+        const myScore = (myTotalFans * 0.5) + (myTotalFame * 10) + (gameManager.state.diamonds * 100);
+
+        let sFactor1 = sabotaged ? 0.2 : (Math.random() + 0.5);
+        let sFactor2 = sabotaged ? 0.1 : (Math.random() * 0.8 + 0.3);
+        let sFactor3 = sabotaged ? 0.3 : (Math.random() * 1.5 + 0.8);
+
+        const agencies = [
+            { name: "My Agency (You)", score: myScore.toFixed(0), isMe: true },
+            { name: "Starfall Agency", score: (myScore * sFactor1).toFixed(0) },
+            { name: "Onyx Entertainment", score: (myScore * sFactor2).toFixed(0) },
+            { name: "Aurora Models", score: (myScore * sFactor3).toFixed(0) }
+        ];
+
+        agencies.sort((a,b) => b.score - a.score);
+
+        let html = '';
+        agencies.forEach((ag, idx) => {
+            let rankColor = "var(--text-muted)";
+            if (idx === 0) rankColor = "var(--gold)";
+            if (idx === 1) rankColor = "#94a3b8"; // Silver
+            if (idx === 2) rankColor = "#b45309"; // Bronze
+
+            html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:${ag.isMe ? 'rgba(251,191,36,0.1)' : 'rgba(0,0,0,0.3)'}; border-left:4px solid ${rankColor}; border-radius:4px; margin-bottom:5px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="font-weight:bold; font-size:16px; color:${rankColor}; width:20px; text-align:center;">#${idx+1}</div>
+                        <div style="font-weight:bold; color:${ag.isMe ? 'var(--gold)' : 'var(--text-main)'};">${ag.name}</div>
+                    </div>
+                    <div style="color:var(--primary); font-family:monospace; font-size:14px;">${ag.score} <span style="font-size:11px;color:var(--text-muted)">RP</span></div>
+                </div>
+            `;
+        });
+
+        lbContainer.innerHTML = html;
+    },
+
+    /* ======================================================================
+       BLACK MARKET / UNDERGROUND LOGIC
+       ====================================================================== */
 
     async generateBlackContract() {
         const container = document.getElementById('ai-black-contract-container');
@@ -359,8 +513,8 @@ const gameApp = {
         const provider = document.getElementById('logic-provider').value;
         let service = (provider === 'gemini') ? geminiService : pollinationsService;
         
-        container.innerHTML = '<p style="color:var(--text-muted); font-size: 13px; text-align: center;"><span class="loading-spinner"></span> Đang truy cập Dark Web bằng AI...</p>';
-        this.showToast("Đang kích hoạt liên lạc ngầm...", "info");
+        container.innerHTML = '<p style="color:var(--text-muted); font-size: 13px; text-align: center;"><span class="loading-spinner"></span> Gửi yêu cầu mật khẩu vào Dark Web...</p>';
+        this.startTask('fetch_dark_job', 'Đang truy cập tài nguyên ngầm qua Dark Web...');
         
         const prompt = `Bạn là một kẻ môi giới thế giới ngầm trong ngành giải trí. Phát sinh ngẫu nhiên 1 Hợp đồng đen (Black Contract) cực kỳ nguy hiểm và cám dỗ cho một nữ người mẫu/idol bị ép buộc hoặc tự nguyện sa ngã. Output duy nhất 1 JSON object với các keys: 
         "title" (tên phi vụ, ngắn gọn, chữ in hoa, có tính chất bí mật/nguy hiểm), 
@@ -372,7 +526,10 @@ const gameApp = {
         Không markdown, chỉ trả về JSON hợp lệ.`;
 
         try {
-            let jsonString = await service.generateText(prompt);
+            let jsonString = (provider === 'gemini') ? await service.generateContent(prompt) : await service.generateText(prompt);
+            
+            this.endTask('fetch_dark_job');
+
             jsonString = (jsonString || '').replace(/```(json)?/gi, '').replace(/```/g, '').trim();
             const data = JSON.parse(jsonString);
             
@@ -388,6 +545,7 @@ const gameApp = {
                 </div>
             `;
         } catch (e) {
+            this.endTask('fetch_dark_job');
             container.innerHTML = '<p style="color:#ef4444; font-size: 12px; text-align: center;">Việc lấy hợp đồng đen thất bại. Vui lòng thử lại.</p>';
             console.error("AI Black Contract error", e);
         }
@@ -407,29 +565,34 @@ const gameApp = {
         let data;
         try { data = JSON.parse(decodeURIComponent(escape(atob(dataBase64)))); } catch (e) { return; }
         
-        const confirmJob = confirm(`ÉP MỘT CÁCH ĐỘC ÁC: ${data.title}\nModel: ${idol.name}\n\nBạn sẽ thu về: ${data.reward.toLocaleString()} 💰\nNhưng cô ấy phải gánh chịu:\n- Căng thẳng +${data.stress}\n- Tha hóa +${data.corruption}\n- Scandal Risk +${data.scandal}%\n\nĐồng ý tiếp tục?`);
-        
-        if (confirmJob) {
-            gameManager.updateMoney(data.reward);
-            idol.stress = Math.min(100, (idol.stress || 0) + data.stress);
-            idol.corruption = Math.min(100, (idol.corruption || 0) + data.corruption);
-            idol.scandalRisk = Math.min(100, (idol.scandalRisk || 0) + data.scandal);
-            
-            if (idol.scandalRisk >= 100) {
-                this.showToast(`CẢNH BÁO: ${idol.name} ĐÃ BỊ PHONG SÁT VÀ NÉM ĐÁ TRÊN REDDIT/TWITTER!`, "error");
+        this.showDialog({
+            title: `ÉP MỘT CÁCH ĐỘC ÁC: ${data.title}`,
+            message: `<strong>Model:</strong> ${idol.name}<br><br><strong>Thu về:</strong> <strong style="color:var(--success);">${data.reward.toLocaleString()} 💰</strong><br><br>Nhưng cô ấy phải gánh chịu:<br>- Căng thẳng: <span style="color:var(--error);">+${data.stress}</span><br>- Tha hóa: <span style="color:var(--error);">+${data.corruption}</span><br>- Scandal Risk: <span style="color:var(--error);">+${data.scandal}%</span><br><br>Bạn có chắc muốn đẩy cô ấy làm không?`,
+            type: "confirm",
+            onConfirm: () => {
+                gameManager.updateMoney(data.reward);
+                idol.stress = Math.min(100, (idol.stress || 0) + data.stress);
+                idol.corruption = Math.min(100, (idol.corruption || 0) + data.corruption);
+                idol.scandalRisk = Math.min(100, (idol.scandalRisk || 0) + data.scandal);
+                idol.stats.scandal_risk = idol.scandalRisk;
+                
+                if (idol.scandalRisk >= 100) {
+                    this.showToast(`CẢNH BÁO: ${idol.name} ĐÃ BỊ PHONG SÁT VÀ NÉM ĐÁ TRÊN REDDIT/TWITTER!`, "error");
+                }
+                if (idol.corruption >= 100 && !idol.concept.includes("Dark Muse")) {
+                    idol.concept = (idol.concept || '') + " | Dark Muse";
+                    this.showToast(`${idol.name} ĐÃ BỊ THA HÓA HOÀN TOÀN!`, "error");
+                }
+                
+                dbManager.saveIdolData(idol);
+                setTimeout(() => {
+                    this.renderUndergroundRoster();
+                    this.refreshUI(idol.id); // Sync all views
+                    document.getElementById('ai-black-contract-container').innerHTML = '';
+                }, 100);
+                this.showToast(`Hợp đồng đen hoàn tất! Tài khoản cộng ${data.reward.toLocaleString()}💰`, "success");
             }
-            if (idol.corruption >= 100 && !idol.concept.includes("Dark Muse")) {
-                idol.concept = (idol.concept || '') + " | Dark Muse";
-                this.showToast(`${idol.name} ĐÃ BỊ THA HÓA HOÀN TOÀN!`, "error");
-            }
-            
-            dbManager.saveIdolData(idol);
-            setTimeout(() => {
-                this.renderUndergroundRoster();
-                document.getElementById('ai-black-contract-container').innerHTML = '';
-            }, 100);
-            this.showToast(`Hợp đồng đen hoàn tất! Tài khoản cộng ${data.reward.toLocaleString()}💰`, "success");
-        }
+        });
     },
 
     renderBrandRequests() {
@@ -489,6 +652,29 @@ const gameApp = {
 
     acceptBrandJob(idx) {
         const req = gameManager.state.brandRequests[idx];
+        
+        // Bidding War (30% chance for an AI rival to jump in)
+        if (Math.random() < 0.3) {
+            const extraCost = Math.floor(req.reward * 0.15) + 1000;
+            this.showDialog({
+                title: `🚨 BIDDING WAR: KẺ ĐỊCH CƯỚP THẦU !`,
+                message: `Một Agency Đối Thủ vừa gửi thư tới <strong>${req.brand}</strong>, tuyên bố sẽ làm tốt hơn với giá rẻ hơn!<br><br>Bạn có muốn tung thêm <strong>${extraCost} 💰</strong> tiền túi làm ngân sách PR để giữ lại hợp đồng này?`,
+                type: "confirm",
+                onConfirm: () => {
+                    if (gameManager.state.money < extraCost) {
+                        return this.showToast("Không đủ tiền để Bid giành hợp đồng! Hợp đồng đã bị mất.", "error");
+                    }
+                    gameManager.updateMoney(-extraCost);
+                    this.showToast(`Đã chi ${extraCost} 💰. Hợp đồng thành công giữ lại!`, "success");
+                    this.proceedBrandJob(req, idx);
+                }
+            });
+        } else {
+            this.proceedBrandJob(req, idx);
+        }
+    },
+
+    proceedBrandJob(req, idx) {
         this.currentBrandSession = req; // Store for later evaluation during photoshot
         this.currentBrandIndex = idx;
         
@@ -717,7 +903,9 @@ Output ONLY the dialogue text directly, no quotes around it, no explanations.`;
         if (type === 'cook') {
             affinityGain = 10;
             stressChange = -30;
-            msg = `🥩 Bạn và ${idol.name} cùng nấu một bữa tối lãng mạn.\nTâm lý cô ấy được giải tỏa cực mạnh.`;
+            this.modifyIdolPhysique(idol, 'weight', 0.5);
+            this.modifyIdolPhysique(idol, 'waist', 0.5);
+            msg = `🥩 Bạn và ${idol.name} cùng nấu và ăn một bữa tối lãng mạn.\nTâm lý cô ấy được giải tỏa cực mạnh (Nhưng tăng cân nhẹ!).`;
         } else if (type === 'talk') {
             if (idol.stress > 70) {
                 this.showToast(`Bị từ chối! ${idol.name} đang quá mệt mỏi và không muốn nói chuyện.`, "error");
@@ -799,49 +987,57 @@ Hãy viết dưới góc nhìn của cô ấy, thể hiện tâm tư thầm kín
         
         document.getElementById('condo-action-modal').style.display = 'none';
 
-        const confirmTour = confirm(`✈️ XÁC NHẬN WORLD TOUR\n\nTổ chức lưu diễn vòng quanh thế giới cho ${idol.name}.\nChi phí: 10,000 💰\nHiệu ứng: Fame +100, Fans ++ cực mạnh, nhưng Stress +80!\n\nĐồng ý xuất phát?`);
-        if (!confirmTour) return;
+        this.showDialog({
+            title: "✈️ XÁC NHẬN WORLD TOUR",
+            message: `Tổ chức lưu diễn vòng quanh thế giới cho <strong>${idol.name}</strong>.<br><br><strong>Chi phí:</strong> <span style="color:var(--error);">10,000 💰</span><br><strong>Hiệu ứng:</strong> Fame +100, Fans ++ cực mạnh, nhưng <strong>Stress +80!</strong><br><br>Đồng ý xuất phát?`,
+            type: "confirm",
+            onConfirm: () => {
+                gameManager.updateMoney(-10000);
+                this.startTask('world_tour_' + idol.id, `Đang đi World Tour: ${idol.name}...`);
+                this.showToast(`Trợ lý đang đặt vé máy bay cho ${idol.name}...`, "info");
 
-        gameManager.updateMoney(-10000);
-        this.startTask('world_tour_' + idol.id, `Đang đi World Tour: ${idol.name}...`);
-        this.showToast(`Trợ lý đang đặt vé máy bay cho ${idol.name}...`, "info");
-
-        const promptText = `${idol.name} (Tên), ${idol.concept} (Phong cách). Cô ấy vừa kết thúc chuyến lưu diễn quốc tế "World Tour" dài ngày.
+                const promptText = `${idol.name} (Tên), ${idol.concept} (Phong cách). Cô ấy vừa kết thúc chuyến lưu diễn quốc tế "World Tour" dài ngày.
 Viết 3 câu tường thuật như một bản tin tạp chí giải trí (Tiếng Việt) mô tả không khí bùng nổ, sự đón chào của hàng ngàn fan hâm mộ, và 1 chi tiết đắt giá cô ấy làm trên sân khấu.`;
 
-        this.injectKeys();
-        try {
-            const provider = document.getElementById('logic-provider').value;
-            const service = (provider === 'gemini') ? geminiService : pollinationsService;
-            let result = (provider === 'gemini') ? await service.generateContent(promptText) : await service.generateText(promptText);
-            
-            idol.stats.fame += 100;
-            idol.fans = (idol.fans || 0) + Math.floor(Math.random() * 50000) + 50000;
-            idol.stress = Math.min(100, (idol.stress || 0) + 80);
-            
-            await dbManager.saveIdolData(idol);
-            cardEngine.updateTotalFame();
-            this.refreshUI();
-            this.renderCondo();
-            
-            this.showDialog({
-                title: `✈️ WORLD TOUR HOÀN TẤT`,
-                message: `<div style="text-align:left; color:var(--text-main); font-size:14px; line-height:1.6; border-left: 4px solid var(--gold); padding-left: 10px;">
-                ${result.replace(/['"«»*]/g, '').trim()}
-                </div>
-                <div style="margin-top:15px; font-size: 13px; color:#34d399; font-weight:bold;">
-                    Hiệu ứng: Danh tiếng (Fame) +100! Số lượng Fan tăng vọt!
-                </div>
-                <div style="margin-top:5px; font-size: 13px; color:var(--error); font-weight:bold;">
-                    Cảnh báo: Stress +80! (Hãy cho Model đi Spa ngay lập tức)
-                </div>`,
-                type: "info"
-            });
-        } catch (e) {
-            this.showToast("Chuyến đi gặp trục trặc bão tố!", "error");
-        } finally {
-            this.endTask('world_tour_' + idol.id);
-        }
+                this.injectKeys();
+                
+                const processTour = async () => {
+                    try {
+                        const provider = document.getElementById('logic-provider').value;
+                        const service = (provider === 'gemini') ? geminiService : pollinationsService;
+                        let result = (provider === 'gemini') ? await service.generateContent(promptText) : await service.generateText(promptText);
+                        
+                        idol.stats.fame += 100;
+                        idol.fans = (idol.fans || 0) + Math.floor(Math.random() * 50000) + 50000;
+                        idol.stress = Math.min(100, (idol.stress || 0) + 80);
+                        
+                        await dbManager.saveIdolData(idol);
+                        cardEngine.updateTotalFame();
+                        this.refreshUI();
+                        this.renderCondo();
+                        
+                        this.showDialog({
+                            title: `✈️ WORLD TOUR HOÀN TẤT`,
+                            message: `<div style="text-align:left; color:var(--text-main); font-size:14px; line-height:1.6; border-left: 4px solid var(--gold); padding-left: 10px;">
+                            ${result.replace(/['"«»*]/g, '').trim()}
+                            </div>
+                            <div style="margin-top:15px; font-size: 13px; color:#34d399; font-weight:bold;">
+                                Hiệu ứng: Danh tiếng (Fame) +100! Số lượng Fan tăng vọt!
+                            </div>
+                            <div style="margin-top:5px; font-size: 13px; color:var(--error); font-weight:bold;">
+                                Cảnh báo: Stress +80! (Hãy cho Model đi Spa ngay lập tức)
+                            </div>`,
+                            type: "info"
+                        });
+                    } catch (e) {
+                        this.showToast("Chuyến đi gặp trục trặc bão tố!", "error");
+                    } finally {
+                        this.endTask('world_tour_' + idol.id);
+                    }
+                };
+                processTour();
+            }
+        });
     },
 
     async organizeDormParty(btn) {
@@ -884,6 +1080,8 @@ Mô phỏng 1 tình huống vui nhộn ngắn gọn (max 4 câu) khi họ đang 
             idols.forEach(idol => {
                 idol.stress = 0;
                 idol.affinity = Math.min(100, (idol.affinity || 30) + 5);
+                this.modifyIdolPhysique(idol, 'weight', 1);
+                this.modifyIdolPhysique(idol, 'waist', 1);
                 dbManager.saveIdolData(idol);
             });
             this.refreshUI();
@@ -895,7 +1093,8 @@ Mô phỏng 1 tình huống vui nhộn ngắn gọn (max 4 câu) khi họ đang 
                 ${result.replace(/['"«»*]/g, '').trim()}
                 </div>
                 <div style="margin-top:15px; font-size: 13px; color:#34d399; font-weight:bold;">
-                    Toàn bộ Model ĐÃ PHỤC HỒI STRESS VỀ 0! Hảo cảm chung +5.
+                    Toàn bộ Model ĐÃ PHỤC HỒI STRESS VỀ 0! Hảo cảm chung +5.<br>
+                    <span style="color:#ef4444; font-size:12px;">(Ăn nhậu quá đà khiến các Model tăng cân nhẹ!)</span>
                 </div>`,
                 type: "info"
             });
@@ -954,8 +1153,11 @@ Mô phỏng 1 tình huống vui nhộn ngắn gọn (max 4 câu) khi họ đang 
     },
 
     async triggerRandomCondoEvent(idol) {
+        let isRealText = idol.isReal ? "LƯU Ý ĐẶC BIỆT: Đây là một NGƯỜI NỔI TIẾNG CÓ THẬT TRONG ĐỜI THỰC (Real Life Celebrity). Tình huống gõ cửa đêm nay phải đặc biệt li kỳ và mang hơi hướng rủi ro từ scandal có thật hoặc truyền thông/fan cuồng ngoài đời thực." : "";
+        
         const promptText = `Tạo một tình huống ngẫu nhiên "Gõ cửa lúc nửa đêm" xảy ra tại căn hộ của Model ${idol.name}. 
 Cô ấy đang có trạng thái (Stress: ${idol.stress}/100, Hảo cảm: ${idol.affinity}/100, Tha hóa: ${idol.corruption}/100).
+${isRealText}
 Tình huống có thể là khẩn cấp (bị fan cuồng bám theo), hoặc tình cảm mập mờ (say rượu gõ cửa phòng người quản lý), hoặc bất ổn tâm lý (khóc lóc vì một thất bại).
 Trả về JSON duy nhất với:
 - "title": Tên sự kiện
@@ -1003,14 +1205,29 @@ Trả về JSON duy nhất với:
             idol.stress = Math.max(0, idol.stress - 15);
             idol.affinity = Math.min(100, idol.affinity + 10);
             msg = `Sự việc được giải quyết ổn thỏa. ${idol.name} cảm thấy an tâm và tin tưởng bạn hơn.\nHảo cảm +10 | Căng thẳng -15`;
+            
+            if (idol.isReal && Math.random() > 0.5) {
+                idol.stats.fame += 20;
+                msg += `\n<br><span style="color:var(--gold);">🌟 ĐẶC QUYỀN CELEBRITY: Báo chí khen ngợi cách xử lý chuyên nghiệp của quản lý! Fame +20</span>`;
+            }
         } else {
             idol.stress = Math.max(0, idol.stress - 30);
             idol.corruption = Math.min(100, (idol.corruption || 0) + 15);
             idol.affinity = Math.min(100, idol.affinity + 20);
             msg = `Một đêm đầy rủi ro và phá vỡ nguyên tắc. Tuy nhiên ${idol.name} dính líu bạn nhiều hơn.\nHảo cảm +20 | Tha hóa +15 | Căng thẳng -30`;
+            
+            if (idol.isReal) {
+                idol.scandalRisk = Math.min(100, (idol.scandalRisk || 0) + 30);
+                idol.stats.scandal_risk = idol.scandalRisk;
+                msg += `\n<br><span style="color:var(--error);">🚨 RỦI RO CELEBRITY: Paparazzi đã chộp được khoảnh khắc nhạy cảm ngoài đời thực này! Nguy cơ Phong sát +30%</span>`;
+                if (idol.scandalRisk >= 100) {
+                    msg += `\n<br><strong style="color:var(--error);">CELEBRITY ĐÃ CHÍNH THỨC BỊ ĐÓNG BĂNG HOẠT ĐỘNG!</strong>`;
+                }
+            }
         }
         dbManager.saveIdolData(idol);
         this.renderCondo();
+        this.refreshUI(idol.id); // Ensure all views are synced
         
         this.showDialog({
             title: "Kết quả", message: msg, type: "info"
@@ -1021,12 +1238,12 @@ Trả về JSON duy nhất với:
         const idol = cardEngine.getIdol(idolId);
         if (!idol) return;
 
-        this.showToast(`Đang kết nối camera và chuẩn bị kịch bản Live...`, "info");
+        this.startTask('livestream_gen', `Đang thiết lập kịch bản Livestream cho ${idol.name}...`);
         this.injectKeys();
         
         const promptText = `Hãy đóng vai AI Livestream Manager. Model ${idol.name} (Phong cách: ${idol.concept}, Fame: ${idol.stats.fame}, Corruption: ${idol.corruption||0}, Stress: ${idol.stress||0}) đang mở một buổi Livestream trên mạng xã hội.
         Hãy tạo một kịch bản Livestream ngắn (Drama/Giao lưu ngẫu nhiên).
-        Output ONLY JSON:
+        Output ONLY JSON (DO NOT add // comments inside the JSON):
         {
           "liveTitle": "Tiêu đề giật tít livestream",
           "modelQuote": "Câu nói của Model khi chào fan (tiếng Việt)",
@@ -1042,6 +1259,8 @@ Trả về JSON duy nhất với:
             const service = (provider === 'gemini') ? geminiService : pollinationsService;
             let result = (provider === 'gemini') ? await service.generateContent(promptText) : await service.generateText(promptText);
             
+            this.endTask('livestream_gen');
+
             let jsonStr = result;
             const match = result.match(/\{[\s\S]*\}/);
             if (match) {
@@ -1085,6 +1304,7 @@ Trả về JSON duy nhất với:
             });
             
         } catch(e) {
+            this.endTask('livestream_gen');
             console.error(e);
             this.showToast("Lỗi kết nối mạng xã hội Livestream, vui lòng thử lại!", "error");
         }
@@ -1135,7 +1355,7 @@ Trả về JSON duy nhất với:
         }
 
         // Lock UI / Show loading
-        this.showToast("Đang kết nối nhận thức AI... chờ Model tự suy nghĩ và quyết định.", "info");
+        this.startTask('ai_job_decision', `Đang kết nối nhận thức AI... chờ ${idol.name} tự quyết định.`);
 
         // Prepare Context Options
         const jobsList = gameManager.currentJobs.map(j => 
@@ -1150,7 +1370,7 @@ Hôm nay công ty đưa ra các hợp đồng sau để bạn tự quyết đị
 ${jobsList}
 
 Nhiệm vụ của bạn:
-1. Đánh giá tình trạng bản thân và chọn MỘT công việc phù hợp nhất (dựa trên danh tiếng yêu cầu, phần thưởng và mức độ stress). Nếu Stress của bạn tính ráo lớn hơn 80, bạn CÓ QUYỀN TỘT ĐỈNH TỪ CHỐI không nhận bất cứ việc gì (chọn jobId = "none").
+1. Đánh giá tình trạng bản thân và chọn MỘT công việc phù hợp nhất (dựa trên danh tiếng yêu cầu, phần thưởng và mức độ stress). Nếu Stress của bạn lớn hơn 80, bạn CÓ QUYỀN TỪ CHỐI không nhận bất cứ việc gì (chọn jobId = "none").
 2. Đưa ra 1 câu nói giải thích lý do khi bạn tự quyết định chọn job này với người quản lý (sếp) bằng Tiếng Việt.
 3. Viết 1 câu báo cáo kết quả của bạn (với cảm xúc vui, mệt mỏi, hay phàn nàn) dự định sẽ NÓI LUÔN SAU KHI LÀM XONG.
 
@@ -1166,6 +1386,8 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             const service = (provider === 'gemini') ? geminiService : pollinationsService;
             let result = (provider === 'gemini') ? await service.generateContent(promptText) : await service.generateText(promptText);
             
+            this.endTask('ai_job_decision');
+
             result = result.replace(/```json/g, '').replace(/```/g, '').trim();
             const jsonStartIndex = result.indexOf('{');
             const jsonEndIndex = result.lastIndexOf('}');
@@ -1276,6 +1498,7 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             }, workDuration); 
 
         } catch (e) {
+            this.endTask('ai_job_decision');
             console.error("AI Roleplay Job Error: ", e);
             this.showToast("Quá trình kết nối Nhận thức AI thất bại.", "error");
         }
@@ -1323,18 +1546,6 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
 
         gameManager.updateMoney(-price);
 
-        const modifyPhysique = (m, key, delta) => {
-            if (!m || !m[key] || m[key] === "?") return;
-            let currentStr = m[key].toString();
-            let match = currentStr.match(/\d+(\.\d+)?/);
-            if (match) {
-                let num = parseFloat(match[0]);
-                let newVal = Math.max(10, num + delta);
-                newVal = Math.round(newVal * 10) / 10;
-                m[key] = currentStr.replace(match[0], newVal);
-            }
-        };
-
         if(serviceId === 'spa_relax') {
             idol.stress = Math.max(0, (idol.stress || 0) - 50);
         } else if(serviceId === 'spa_skin') {
@@ -1342,24 +1553,27 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         } else if(serviceId === 'spa_vacation') {
             idol.stress = 0;
             idol.affinity = Math.min(100, (idol.affinity || 30) + 15);
+            this.modifyIdolPhysique(idol, 'weight', 2);
+            this.modifyIdolPhysique(idol, 'waist', 1.5);
+            // Kèm thông báo hoặc không tuỳ ý. Nhưng do toast bên dưới chung chung nên ko cần.
         } else if(serviceId === 'spa_diet') {
             idol.stress = Math.min(100, (idol.stress || 0) + 15);
-            modifyPhysique(idol.measurements, 'weight', -2);
-            modifyPhysique(idol.measurements, 'waist', -2);
-            modifyPhysique(idol.measurements, 'bust', -1);
+            this.modifyIdolPhysique(idol, 'weight', -2);
+            this.modifyIdolPhysique(idol, 'waist', -2);
+            this.modifyIdolPhysique(idol, 'bust', -1);
             idol.stats.visual = Math.min(100, idol.stats.visual + 2);
         } else if(serviceId === 'spa_gym') {
             idol.stress = Math.min(100, (idol.stress || 0) + 15);
-            modifyPhysique(idol.measurements, 'weight', 1);
-            modifyPhysique(idol.measurements, 'bust', 1);
-            modifyPhysique(idol.measurements, 'hips', 2);
-            modifyPhysique(idol.measurements, 'waist', -1);
+            this.modifyIdolPhysique(idol, 'weight', 1);
+            this.modifyIdolPhysique(idol, 'bust', 1);
+            this.modifyIdolPhysique(idol, 'hips', 2);
+            this.modifyIdolPhysique(idol, 'waist', -1);
             idol.stats.visual = Math.min(100, idol.stats.visual + 3);
         } else if(serviceId === 'spa_plastic') {
             idol.stress = Math.min(100, (idol.stress || 0) + 40);
             idol.corruption = Math.min(100, (idol.corruption || 0) + 20);
-            modifyPhysique(idol.measurements, 'bust', 4);
-            modifyPhysique(idol.measurements, 'hips', 3);
+            this.modifyIdolPhysique(idol, 'bust', 4);
+            this.modifyIdolPhysique(idol, 'hips', 3);
             idol.stats.visual = Math.min(100, idol.stats.visual + 10);
             if (idol.corruption === 100 && (!idol.concept || !idol.concept.includes("Dark Muse"))) {
                 idol.concept = (idol.concept || '') + " | Dark Muse";
@@ -1411,9 +1625,65 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                 btnGlobal.style.cursor = 'pointer';
             }
         }
+
+        // Render Chợ đen / Poached models
+        const poachedGrid = document.getElementById('scout-poached-grid');
+        if (poachedGrid && typeof cardEngine !== 'undefined') {
+            poachedGrid.innerHTML = '';
+            const poachedModels = Array.from(cardEngine.poachedRoster.values());
+            if (poachedModels.length === 0) {
+                poachedGrid.innerHTML = '<p style="color:var(--text-muted); font-size:13px; grid-column:1/-1;">Không có Model nào trong danh sách đen.</p>';
+            } else {
+                poachedModels.forEach(model => {
+                    const cost = 50000;
+                    const canAfford = gameManager.state.money >= cost;
+                    let safeAvatar = model.avatarUrl && !model.avatarUrl.startsWith('blob:') ? model.avatarUrl : this.fallbackImage;
+                    
+                    poachedGrid.innerHTML += `
+                        <div style="background: rgba(0,0,0,0.5); border: 1px solid var(--error); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <img src="${safeAvatar}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                <div>
+                                    <h4 style="margin: 0; color: var(--error); font-size: 14px;">${model.name}</h4>
+                                    <p style="margin: 0; font-size: 12px; color: var(--text-muted);">Trạng thái: <strong>${model.status === 'poached' ? 'Bị đối thủ cướp' : 'Bị sa thải'}</strong></p>
+                                </div>
+                            </div>
+                            <div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between;">
+                                <span style="color:var(--gold); font-weight:bold; font-size:13px;">${cost.toLocaleString()} 💰</span>
+                                <button class="btn-action" style="padding: 5px 10px; background:var(--error); color:white; font-size:11px;" ${canAfford ? '' : 'disabled'} onclick="gameApp.buyBackModel('${model.id}', ${cost})">CHUỘC LẠI</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
     },
 
-    renderShop() {
+    filterShop(category, btnElement) {
+        document.querySelectorAll('.shop-tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.background = 'var(--bg-surface)';
+            if (btn.dataset.category !== 'premium') {
+                btn.style.color = 'var(--text-main)';
+                btn.style.border = '';
+            } else {
+                btn.style.color = 'var(--secondary)';
+            }
+        });
+        
+        btnElement.classList.add('active');
+        if (category !== 'premium') {
+            btnElement.style.background = 'var(--primary)';
+            btnElement.style.color = '#000';
+        } else {
+            btnElement.style.background = 'var(--secondary)';
+            btnElement.style.color = '#000';
+        }
+        
+        this.renderShop(category);
+    },
+
+    renderShop(categoryFilter = 'all') {
         const grid = document.getElementById('shop-grid');
         grid.innerHTML = '';
         
@@ -1427,7 +1697,12 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             }
         });
         
-        gameManager.shopItems.forEach(item => {
+        let displayItems = gameManager.shopItems;
+        if (categoryFilter !== 'all') {
+            displayItems = gameManager.shopItems.filter(i => i.category === categoryFilter);
+        }
+        
+        displayItems.forEach(item => {
             const owned = gameManager.state.inventory[item.id] || 0;
             const div = document.createElement('div');
             div.className = 'shop-item';
@@ -1473,6 +1748,12 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
     },
 
     openUseItem(itemId) {
+        // Đóng ngay hộp thoại hiện tại (túi đồ) để hộp thoại chọn Model có thể hiển thị ngay lập tức
+        const modal = document.getElementById('dialog-modal');
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        }
+
         const item = gameManager.shopItems.find(i => i.id === itemId);
         if(!item) return;
 
@@ -1581,9 +1862,38 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             idol.mood = "Vô cùng hạnh phúc";
         } else if (item.type === 'media_vip') {
             idol.stats.fame = Math.min(100, (idol.stats.fame || 0) + item.effect);
-            idol.stats.scandal_risk = Math.max(5, (idol.stats.scandal_risk || 5) - 30);
+            idol.scandalRisk = Math.max(0, (idol.scandalRisk || 0) - 30);
+            idol.stats.scandal_risk = idol.scandalRisk;
             idol.corruption = Math.max(0, (idol.corruption || 0) - 10);
             idol.fans = (idol.fans || 0) + 2000;
+        } else if (item.type === 'fame_boost') {
+            idol.stats.fame += item.effect;
+            idol.fans = (idol.fans || 0) + 10000;
+        } else if (item.type === 'clear_scandal') {
+            idol.scandalRisk = Math.max(0, (idol.scandalRisk || 0) + item.effect);
+            idol.stats.scandal_risk = idol.scandalRisk;
+            idol.corruption = Math.max(0, (idol.corruption || 0) - 20);
+        } else if (item.type === 'shoes_visual') {
+            if (!idol.shoes) idol.shoes = [];
+            if (!idol.shoes.find(o => o.id === itemId)) {
+                idol.shoes.push({ id: itemId, name: item.name, promptEffect: item.promptEffect || '' });
+            } else {
+                gameManager.state.inventory[itemId] += 1;
+                return this.showToast(`${idol.name} đã có giày này! (Hoàn lại kho)`, "warning");
+            }
+            idol.stats.visual = Math.min(100, (idol.stats.visual || 50) + item.effect);
+            idol.stats.fame += (item.effect === 20 ? 5 : 10);
+            idol.fans = (idol.fans || 0) + (item.effect === 20 ? 500 : 1000);
+        } else if (item.type === 'shoes_active') {
+            if (!idol.shoes) idol.shoes = [];
+            if (!idol.shoes.find(o => o.id === itemId)) {
+                idol.shoes.push({ id: itemId, name: item.name, promptEffect: item.promptEffect || '' });
+            } else {
+                gameManager.state.inventory[itemId] += 1;
+                return this.showToast(`${idol.name} đã có giày này! (Hoàn lại kho)`, "warning");
+            }
+            idol.stats.visual = Math.min(100, (idol.stats.visual || 50) + item.effect);
+            idol.stress = Math.max(0, (idol.stress || 0) - 10);
         } else if (item.type === 'outfit') {
             if (!idol.outfits) idol.outfits = [];
             if (!idol.outfits.find(o => o.id === itemId)) {
@@ -1592,6 +1902,15 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                 gameManager.state.inventory[itemId] += 1;
                 gameManager.save();
                 return this.showToast(`${idol.name} đã sở hữu trang phục này! (Hoàn lại kho)`, "warning");
+            }
+        } else if (item.type === 'accessory') {
+            if (!idol.accessories) idol.accessories = [];
+            if (!idol.accessories.find(o => o.id === itemId)) {
+                idol.accessories.push({ id: itemId, name: item.name, promptEffect: item.effect });
+            } else {
+                gameManager.state.inventory[itemId] += 1;
+                gameManager.save();
+                return this.showToast(`${idol.name} đã sở hữu phụ kiện này! (Hoàn lại kho)`, "warning");
             }
         }
 
@@ -1602,6 +1921,7 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         if (gameManager.incrementAction) gameManager.incrementAction();
         
         this.showToast(`Sử dụng ${item.name} cho ${idol.name} thành công!`, "success");
+        setTimeout(() => this.openInventory(), 100);
     },
 
     buyItem(id) {
@@ -1845,7 +2165,40 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         });
     },
 
-    saveSettings() {
+    updateSidebarVisibility() {
+        const checkboxes = document.querySelectorAll('#sidebar-customize-container input[type="checkbox"]');
+        const defaultPins = ['management', 'jobs', 'shop', 'inventory', 'scout', 'studio'];
+        
+        let checked = [];
+        checkboxes.forEach(cb => {
+            if (cb.checked) checked.push(cb.value);
+            const btn = document.getElementById(`nav-btn-${cb.value}`);
+            if (btn) {
+                btn.style.display = cb.checked ? 'flex' : 'none';
+            }
+        });
+        
+        // If nothing is initialized yet (load fails or first time), fallback
+        if (checked.length === 0) {
+             checked = defaultPins;
+             checkboxes.forEach(cb => {
+                const isDefault = defaultPins.includes(cb.value);
+                cb.checked = isDefault;
+                const btn = document.getElementById(`nav-btn-${cb.value}`);
+                if (btn) btn.style.display = isDefault ? 'flex' : 'none';
+             });
+        }
+        
+        this.saveSettings(checked);
+    },
+
+    saveSettings(checkedMenus = null) {
+        if (!checkedMenus) {
+            const checkboxes = document.querySelectorAll('#sidebar-customize-container input[type="checkbox"]');
+            checkedMenus = [];
+            checkboxes.forEach(cb => { if(cb.checked) checkedMenus.push(cb.value); });
+        }
+    
         const settings = {
             polliKey: document.getElementById('polli-credential').value,
             polliToggle: document.getElementById('polli-toggle').checked,
@@ -1855,7 +2208,8 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             geminiKey: document.getElementById('gemini-key').value,
             geminiModel: document.getElementById('gemini-model').value,
             polliTextModel: document.getElementById('polli-text-model').value,
-            uiFont: document.getElementById('ui-font').value
+            uiFont: document.getElementById('ui-font').value,
+            pinnedMenus: checkedMenus
         };
         localStorage.setItem('muse_architect_config', JSON.stringify(settings));
         this.injectKeys();
@@ -1866,6 +2220,7 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
     },
 
     loadSettings() {
+        let config_pinned = null;
         const saved = localStorage.getItem('muse_architect_config');
         if (saved) {
             const config = JSON.parse(saved);
@@ -1882,7 +2237,22 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                 document.getElementById('ui-font').value = config.uiFont;
                 document.body.setAttribute('data-font', config.uiFont);
             }
+            if(config.pinnedMenus) config_pinned = config.pinnedMenus;
         }
+        
+        const checkboxes = document.querySelectorAll('#sidebar-customize-container input[type="checkbox"]');
+        const defaultPins = ['management', 'jobs', 'shop', 'inventory', 'scout', 'studio'];
+        
+        checkboxes.forEach(cb => {
+            if (config_pinned !== null) {
+                cb.checked = config_pinned.includes(cb.value);
+            } else {
+                cb.checked = defaultPins.includes(cb.value);
+            }
+            const btn = document.getElementById(`nav-btn-${cb.value}`);
+            if (btn) btn.style.display = cb.checked ? 'flex' : 'none';
+        });
+
         this.injectKeys();
     },
 
@@ -1934,6 +2304,19 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         if (typeof gameManager !== 'undefined') gameManager.init();
         try { await cardEngine.init(); } catch (e) { console.warn("Card Engine Fallback"); }    
         
+        // Fix legacy scandalRisk sync
+        cardEngine.getAllIdols().forEach(idol => {
+            if (idol.scandalRisk !== idol.stats?.scandal_risk) {
+                // Determine which one is more accurate (usually scandalRisk since it affects gameplay directly)
+                const s1 = idol.scandalRisk || 0;
+                const s2 = idol.stats?.scandal_risk || 0;
+                idol.scandalRisk = Math.max(s1, s2);
+                if (!idol.stats) idol.stats = {};
+                idol.stats.scandal_risk = idol.scandalRisk;
+                dbManager.saveIdolData(idol);
+            }
+        });
+
         this.syncUI(); 
         this.refreshUI();
         this.renderAchievements();
@@ -1973,9 +2356,10 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         let originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = "⏳ SCANNING...";
-        this.showToast(`Đang rà soát mạng lưới casting ${tier.toUpperCase()}...`, "info");
         
         ['btn-scout-1','btn-scout-2','btn-scout-3'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).disabled = true; });
+
+        this.startTask('scouting', `Đang rà soát mạng lưới casting ${tier.toUpperCase()}`);
 
         this.injectKeys();
         const provider = document.getElementById('logic-provider').value;
@@ -1989,20 +2373,23 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             ['btn-scout-1','btn-scout-2','btn-scout-3'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).disabled = false; });
             btn.textContent = originalText;
             this.renderScoutView();
+            this.endTask('scouting');
             return;
         }
+        
+        this.endTask('scouting');
 
         if (candidate) {
             this.currentScoutCandidate = candidate;
             this.currentScoutCost = cost;
             this.currentScoutTier = tier;
-            document.getElementById('preview-name').textContent = candidate.name;
+            document.getElementById('preview-name').innerHTML = candidate.name + (candidate.isReal ? ' <span style="color:#38bdf8; font-size:16px;" title="Real Life Celebrity">☑️</span>' : '');
             document.getElementById('preview-concept').textContent = candidate.concept;
             document.getElementById('preview-nationality').textContent = `[ ${candidate.nationality || 'Unknown'} ]`;
             document.getElementById('preview-bio').textContent = candidate.bio;
             
             document.getElementById('preview-physique').innerHTML = `
-                <div style="margin-bottom: 8px; font-weight: bold; color: var(--gold);">${candidate.gender || 'Nữ'} - LV.${candidate.level || 1}</div>
+                <div style="margin-bottom: 8px; font-weight: bold; color: var(--gold);">${candidate.age ? candidate.age + ' tuổi | ' : ''}${candidate.gender || 'Nữ'} - LV.${candidate.level || 1}</div>
                 ${this.formatPhysique(candidate.measurements)}
             `;
 
@@ -2041,9 +2428,11 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             gameManager.updateMoney(-cost);
         }
         
-        this.showToast("Đang chuẩn bị hồ sơ và chụp Avatar mặc định...", "info");
+        this.startTask('finalize_scout', 'Đang thiết kế hình ảnh Avatar cho Model...');
         
         const newModel = await cardEngine.finalizeIdolRecruitment(this.currentScoutCandidate);
+        
+        this.endTask('finalize_scout');
         
         if (newModel) {
             this.refreshUI();
@@ -2057,6 +2446,32 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         this.currentScoutCandidate = null;
         this.currentScoutCost = null;
         this.currentScoutTier = null;
+    },
+
+    async buyBackModel(id, cost) {
+        if (gameManager.state.money < cost) {
+            return this.showToast(`Không đủ ${cost.toLocaleString()} 💰 để chuộc lại!`, "error");
+        }
+        
+        const success = await cardEngine.unPoachIdol(id);
+        if (success) {
+            gameManager.updateMoney(-cost);
+            this.showToast("Đã chuộc Model thành công! Mối quan hệ quay về 0.", "success");
+            
+            // Reset some stats
+            const idol = cardEngine.getIdol(id);
+            if(idol) {
+                idol.affinity = 0;
+                idol.stress = 0;
+                idol.corruption = Math.max(0, (idol.corruption || 0) + 10);
+                await dbManager.saveIdolData(idol);
+            }
+            
+            this.refreshUI();
+            this.renderStudioSelect();
+        } else {
+            this.showToast("Lỗi khi chuộc Model.", "error");
+        }
     },
 
     async triggerDeleteIdol(id) {
@@ -2124,7 +2539,7 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                 <span style="font-size: 40px; display: block; margin-bottom: 20px;">🎬</span>
                 <h3 style="color: var(--text-main); margin-bottom: 8px;">Sẵn sàng để trở thành bệ phóng cho các siêu sao?</h3>
                 <p style="color: var(--text-muted); font-size: 14px;">Hãy bắt đầu bằng việc tìm kiếm Model đầu tiên của bạn.</p>
-                <button class="btn-action btn-primary mt-20" onclick="gameApp.showScoutModal()">🎯 TÌM KIẾM MODEL NGAY</button>
+                <button class="btn-action btn-primary mt-20" onclick="gameApp.switchView('scout')">🎯 TÌM KIẾM MODEL NGAY</button>
             </div>`;
             return;
         }
@@ -2132,6 +2547,11 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         let htmlBuffer = '';
         cardEngine.roster.forEach(idol => {
             if (!idol) return; 
+
+            // Sync legacy risk if needed during rendering to be absolutely safe
+            if (idol.scandalRisk !== idol.stats?.scandal_risk) {
+                idol.stats.scandal_risk = idol.scandalRisk || 0;
+            }
 
             let safeAvatar = idol.avatarUrl;
             if (!safeAvatar || safeAvatar === 'undefined' || safeAvatar.startsWith('blob:')) { 
@@ -2161,7 +2581,7 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                          <div style="position:absolute; top:-1px; left:-1px; background: ${isDarkMuse ? 'rgba(200,0,0,0.8)' : 'linear-gradient(135deg, var(--primary), #8b6d19)'}; padding:5px 12px; border-bottom-right-radius:10px; font-family: 'JetBrains Mono'; font-weight:bold; color:#000; font-size:12px; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);">LV ${idol.level || 1}</div>
                          
                          <div style="position:absolute; bottom:0; padding:40px 15px 15px; width:100%; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);">
-                             <h4 style="margin:0 0 4px 0; font-size: 18px; color:${isDarkMuse ? '#ff4d4d' : '#fff'}; text-transform:uppercase; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${idol.name}</h4>
+                             <h4 style="margin:0 0 4px 0; font-size: 18px; color:${isDarkMuse ? '#ff4d4d' : '#fff'}; text-transform:uppercase; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${idol.name}${idol.isReal ? ' <span style="font-size:14px;color:#38bdf8;" title="Real Life Celebrity">☑️</span>' : ''}</h4>
                              <div style="font-size:11px; color:var(--primary); font-weight:600; text-transform: uppercase;">[ ${idol.nationality || 'Unknown'} ]</div>
                              <div style="font-size:11px; color:#ccc; font-weight:600; text-shadow:1px 1px 2px #000; text-transform: uppercase;">${idol.concept || 'Trainee'}</div>
                          </div>
@@ -2169,33 +2589,42 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                     
                     <div style="padding: 16px; background: var(--bg-surface); flex: 1; display:flex; flex-direction:column; gap:12px; border-top: 2px solid ${isDarkMuse ? '#ff4d4d' : 'var(--primary)'};">
                         
-                        <div style="display:flex; justify-content: space-between; font-size:13px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom:6px;">
-                            <span style="color:var(--text-muted); text-transform:uppercase; font-size:11px; letter-spacing:0.5px;">Fans</span>
-                            <span style="color:var(--gold); font-weight:800;">${(idol.fans || 0).toLocaleString()} <i class="fas fa-star" style="font-size:10px;"></i></span>
+                        <div style="display:flex; justify-content: space-between; font-size:13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom:6px;">
+                            <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Fans</span>
+                            <span style="color:var(--gold); font-weight:800;">${(idol.fans || 0).toLocaleString()}</span>
                         </div>
                         
-                        <div style="display:flex; justify-content: space-between; font-size:13px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom:6px;">
-                            <span style="color:var(--text-muted); text-transform:uppercase; font-size:11px; letter-spacing:0.5px;">Visual</span>
-                            <span style="color:#fff; font-weight:bold; font-family:'JetBrains Mono';">${idol.stats.visual}</span>
+                        <div style="display:flex; justify-content: space-between; font-size:13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom:6px;">
+                            <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Visual</span>
+                            <span style="color:#fff; font-weight:bold;">${idol.stats.visual}</span>
                         </div>
                         
-                        <div style="display:flex; justify-content: space-between; font-size:13px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom:6px;">
-                            <span style="color:var(--text-muted); text-transform:uppercase; font-size:11px; letter-spacing:0.5px;">Physique</span>
-                            <span style="color:#fff; font-weight:bold; font-family:'JetBrains Mono';">${this.formatPhysique(idol.measurements)}</span>
+                        <div style="display:flex; flex-direction: column; gap: 4px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom:6px;">
+                            <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Physique</span>
+                            <div style="color:rgba(255,255,255,0.9); font-size:11px; font-weight:500; line-height:1.4;">${this.formatPhysique(idol.measurements)}</div>
                         </div>
                         
                         <div style="margin-top:auto; padding-top:4px;">
                             <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:6px; font-weight:bold;">
-                                <span style="color:var(--text-muted); text-transform:uppercase;">Stress</span>
+                                <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px;">Stress</span>
                                 <span style="color:${stress > 60 ? 'var(--error)' : (stress > 30 ? 'var(--gold)' : 'var(--success)')};">${stress}%</span>
                             </div>
-                            <div style="background: rgba(0,0,0,0.5); height:6px; border-radius:3px; overflow:hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);">
+                            <div style="background: rgba(0,0,0,0.5); height:4px; border-radius:2px; overflow:hidden;">
                                 <div style="height:100%; width:${stress}%; background: ${stress > 60 ? 'var(--error)' : (stress > 30 ? 'var(--gold)' : 'var(--success)')}; box-shadow: 0 0 5px ${stress > 60 ? 'var(--error)' : 'transparent'};"></div>
                             </div>
                         </div>
                         
-                        ${isScandalous && !isCancelled ? `<div style="font-size:11px; color:#000; background:var(--error); text-align:center; padding:4px 0; border-radius:4px; margin-top:4px; font-weight:bold; animation: pulse 1.5s infinite;">⚠️ CẢNH BÁO SCANDAL (${idol.scandalRisk}%)</div>` : ''}
-                        ${(!isScandalous && !isCancelled && isDarkMuse) ? `<div style="font-size:11px; color:#fff; background:#8b0000; text-align:center; padding:4px 0; border-radius:4px; margin-top:4px; font-weight:bold; letter-spacing:1px; border:1px solid #ff4d4d; box-shadow: 0 0 10px rgba(255,0,0,0.3);">🌑 THỰC THỂ BÓNG TỐI</div>` : ''}
+                        ${isScandalous && !isCancelled ? `
+                        <div style="margin-top: 8px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); border-radius: 4px; overflow: hidden; animation: pulse 2s infinite;">
+                            <div style="display: flex; justify-content: space-between; padding: 4px 8px; font-size: 10px; font-weight: 800; color: var(--error); text-transform: uppercase;">
+                                <span>⚠️ Scandal Risk</span>
+                                <span>${idol.scandalRisk}%</span>
+                            </div>
+                            <div style="height: 3px; background: rgba(0,0,0,0.3);">
+                                <div style="height: 100%; width: ${idol.scandalRisk}%; background: var(--error);"></div>
+                            </div>
+                        </div>` : ''}
+                        ${(!isScandalous && !isCancelled && isDarkMuse) ? `<div style="font-size:10px; color:#fff; background:#8b0000; text-align:center; padding:4px 0; border-radius:4px; margin-top:8px; font-weight:bold; letter-spacing:1px; border:1px solid #ff4d4d;">🌑 DARK MUSE</div>` : ''}
                     </div>
                 </div>`;
         });
@@ -2293,11 +2722,11 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                 <div style="flex-grow: 1; min-width: 200px;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <h3 style="font-size: 24px; margin: 0; color: var(--text-main); font-weight: 700; letter-spacing: 0;">${idol.name}</h3>
+                            <h3 style="font-size: 24px; margin: 0; color: var(--text-main); font-weight: 700; letter-spacing: 0;">${idol.name}${idol.isReal ? ' <span style="font-size:16px;color:#38bdf8;" title="Real Life Celebrity">☑️</span>' : ''}</h3>
                             <div style="background:${tierObj.color}; color:#000; font-weight:900; padding:2px 8px; border-radius:4px; font-size:12px;">TIER ${tierObj.id}</div>
                         </div>
                         <div style="font-size: 11px; padding: 4px 8px; background: rgba(255,255,255,0.1); border-radius: 4px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                            ${genderText} - <span id="profile-nationality-text">${idol.nationality || 'Unknown'}</span>
+                            ${idol.age ? idol.age + ' tuổi | ' : ''} ${genderText} - <span id="profile-nationality-text">${idol.nationality || 'Unknown'}</span>
                             ${(!idol.nationality || idol.nationality === "Unknown") ? `<button onclick="gameApp.inferNationality('${idol.id}')" style="background: none; border: none; color: var(--gold); cursor: pointer; font-size: 12px; padding: 0;" title="Nội suy bằng AI">🪄</button>` : ''}
                         </div>
                     </div>
@@ -2338,9 +2767,22 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             <p style="font-size: 14px; color: var(--text-muted); font-style: italic; margin-top: 20px; line-height: 1.6;">${idol.bio}</p>
             
             <div class="stats-grid" style="margin-top: 20px;">
-                <div class="stat-item"><div class="stat-label">Fame</div><div class="stat-value font-mono">${idol.stats.fame}</div></div>
-                <div class="stat-item"><div class="stat-label">Visual</div><div class="stat-value font-mono">${idol.stats.visual}</div></div>
-                <div class="stat-item"><div class="stat-label">Risk</div><div class="stat-value font-mono text-error">${idol.stats.scandal_risk}</div></div>
+                <div class="stat-item">
+                    <div class="stat-label">Fame</div>
+                    <div class="stat-value font-mono">${idol.stats.fame}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Fans</div>
+                    <div class="stat-value font-mono" style="color:var(--gold);">${(idol.fans || 0).toLocaleString()}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Visual</div>
+                    <div class="stat-value font-mono">${idol.stats.visual}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Risk</div>
+                    <div class="stat-value font-mono text-error">${idol.scandalRisk || 0}</div>
+                </div>
             </div>
 
             <div style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 16px;">
@@ -2390,6 +2832,40 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                     ${idol.equippedOutfit ? `<button class="btn-action w-full mt-10" style="padding: 6px; font-size: 11px; background:transparent; color:var(--error); border: 1px solid var(--error);" onclick="gameApp.equipOutfit('${idol.id}', null)">CỞI BỎ TRANG PHỤC (Mặc định)</button>` : ''}
                 </div>
                 `}
+
+                ${(idol.shoes && idol.shoes.length > 0) ? `
+                <h4 style="font-size: 14px; margin-top: 20px; margin-bottom: 12px; color: var(--gold); display: flex; align-items: center; gap: 8px;">
+                    👠 TỦ GIÀY CAO GÓT
+                </h4>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                    ${idol.shoes.map(shoe => `
+                        <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 13px; color: var(--text-main); font-weight: 600;">${shoe.name}</div>
+                            ${idol.equippedShoe === shoe.id ? 
+                                `<span style="font-size:11px; padding:4px 8px; background:var(--success); color:#000; border-radius:4px; font-weight:bold;">ĐÃ MANG</span>` : 
+                                `<button class="btn-action" style="padding: 4px 10px; font-size: 11px; background:var(--bg-elevated); color:var(--primary); border: 1px solid var(--primary);" onclick="gameApp.equipShoe('${idol.id}', '${shoe.id}')">MANG (Equip)</button>`
+                            }
+                        </div>
+                    `).join('')}
+                    ${idol.equippedShoe ? `<button class="btn-action w-full mt-10" style="padding: 6px; font-size: 11px; background:transparent; color:var(--error); border: 1px solid var(--error);" onclick="gameApp.equipShoe('${idol.id}', null)">CỞI GIÀY CAO GÓT (Mặc định)</button>` : ''}
+                </div>` : ''}
+
+                ${(idol.accessories && idol.accessories.length > 0) ? `
+                <h4 style="font-size: 14px; margin-top: 20px; margin-bottom: 12px; color: var(--gold); display: flex; align-items: center; gap: 8px;">
+                    💎 TRANG SỨC & PHỤ KIỆN
+                </h4>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                    ${idol.accessories.map(acc => `
+                        <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 13px; color: var(--text-main); font-weight: 600;">${acc.name}</div>
+                            ${idol.equippedAccessory === acc.id ? 
+                                `<span style="font-size:11px; padding:4px 8px; background:var(--success); color:#000; border-radius:4px; font-weight:bold;">ĐÃ ĐEO</span>` : 
+                                `<button class="btn-action" style="padding: 4px 10px; font-size: 11px; background:var(--bg-elevated); color:var(--primary); border: 1px solid var(--primary);" onclick="gameApp.equipAccessory('${idol.id}', '${acc.id}')">ĐEO (Equip)</button>`
+                            }
+                        </div>
+                    `).join('')}
+                    ${idol.equippedAccessory ? `<button class="btn-action w-full mt-10" style="padding: 6px; font-size: 11px; background:transparent; color:var(--error); border: 1px solid var(--error);" onclick="gameApp.equipAccessory('${idol.id}', null)">THÁO PHỤ KIỆN</button>` : ''}
+                </div>` : ''}
             </div>
 
             <div class="trend-alert mt-20">📡 <strong>Latest Trend:</strong> "${idol.latestTrend || 'Chưa có thông tin cập nhật.'}"</div>
@@ -2422,10 +2898,43 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             const outfit = idol.outfits.find(o => o.id === outfitId);
             this.showToast(`Đã mặc ${outfit ? outfit.name : 'trang phục'}!`, "success");
         } else {
-            this.showToast(`Đã gỡ trang phục, trở về concept gốc.`, "info");
+            this.showToast("Đã cởi trang phục.", "info");
         }
         
-        // Refresh modal
+        this.openIdolProfile(idolId);
+    },
+
+    equipShoe(idolId, shoeId) {
+        const idol = cardEngine.getIdol(idolId);
+        if (!idol) return;
+        
+        idol.equippedShoe = shoeId;
+        dbManager.saveIdolData(idol);
+        
+        if (shoeId) {
+            const shoe = idol.shoes.find(o => o.id === shoeId);
+            this.showToast(`Đã mang ${shoe ? shoe.name : 'giày'}!`, "success");
+        } else {
+            this.showToast("Đã cởi giày.", "info");
+        }
+        
+        this.openIdolProfile(idolId);
+    },
+
+    equipAccessory(idolId, accId) {
+        const idol = cardEngine.getIdol(idolId);
+        if (!idol) return;
+        
+        idol.equippedAccessory = accId;
+        dbManager.saveIdolData(idol);
+        
+        if (accId) {
+            const acc = idol.accessories.find(o => o.id === accId);
+            this.showToast(`Đã đeo ${acc ? acc.name : 'phụ kiện'}!`, "success");
+        } else {
+            this.showToast("Đã tháo trang sức.", "info");
+        }
+        
         this.openIdolProfile(idolId);
     },
 
@@ -2673,6 +3182,7 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
                 // Bounds
                 if (idol.stats.scandal_risk < 0) idol.stats.scandal_risk = 0;
                 if (idol.stats.scandal_risk > 100) idol.stats.scandal_risk = 100;
+                idol.scandalRisk = idol.stats.scandal_risk;
                 sysActions.push(`Risk ${data.risk_change > 0 ? '+'+data.risk_change : data.risk_change}`); 
                 updated = true; 
             }
@@ -2920,6 +3430,23 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
         const src = document.getElementById('studio-image').src;
         if (!src) return;
         document.getElementById('zoomed-img').src = src;
+        this.currentGalleryViewId = null;
+        this.zoomedFromStudio = true;
+        
+        let btnDelete = document.getElementById('btn-gallery-delete');
+        if (btnDelete) btnDelete.style.display = 'none'; // Studio has no delete button in zoom
+        
+        let btnPublish = document.getElementById('btn-gallery-publish');
+        if (btnPublish) {
+            btnPublish.style.display = 'inline-flex';
+            btnPublish.disabled = false;
+            btnPublish.title = "Đăng lên MuseGram";
+            btnPublish.style.opacity = '1';
+        }
+
+        let existingBadge = document.getElementById('zoom-published-badge');
+        if (existingBadge) existingBadge.remove();
+
         document.getElementById('zoom-modal').style.display = 'flex';
     },
 
@@ -2975,7 +3502,7 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
                 <option value="flux" ${defaultImageModel === 'flux' ? 'selected' : ''}>FLUX (Hyper-Realistic)</option>
                 <option value="zimage" ${defaultImageModel === 'zimage' ? 'selected' : ''}>ZIMAGE (Cinematic)</option>
                 <option value="qwen-image" ${defaultImageModel === 'qwen-image' ? 'selected' : ''}>QWEN (Balanced)</option>
-                <option value="wan-image" ${defaultImageModel === 'wan-image' ? 'selected' : ''}>WAN (Artistic)</option>
+                <option value="gptimage-large" ${defaultImageModel === 'gptimage-large' ? 'selected' : ''}>GPT Image 1.5 (Artistic)</option>
             </select>
         `;
 
@@ -3076,8 +3603,8 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
             return;
         }
 
-        status.style.color = "var(--gold)";
-        status.textContent = "[CINE-TECH] Đang gửi kết quả cho Nhãn hàng đánh giá...";
+        status.textContent = "";
+        this.startTask('brand_evaluation', `Đang gửi cho ${req.brand} đánh giá kết quả...`);
 
         const promptText = `Act as an expert Brand Marketing Director for "${req.brand}". 
 You requested the following creative direction: "${req.requirement}".
@@ -3093,6 +3620,8 @@ Output STRICTLY JSON:
             const service = (provider === 'gemini') ? geminiService : pollinationsService;
             let result = (provider === 'gemini') ? await service.generateContent(promptText) : await service.generateText(promptText);
             
+            this.endTask('brand_evaluation');
+
             result = result.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
             const jsonStartIndex = result.indexOf('{');
             const jsonEndIndex = result.lastIndexOf('}');
@@ -3129,6 +3658,7 @@ Output STRICTLY JSON:
             });
             
         } catch(e) {
+            this.endTask('brand_evaluation');
             status.textContent = "Không thể liên lạc với Nhãn hàng.";
         }
     },
@@ -3151,9 +3681,10 @@ Output STRICTLY JSON:
         
         const { idolId, url, prompt } = this.currentRenderSession;
         try {
-            const success = await dbManager.savePhoto(idolId, url, prompt);
-            if (success) {
+            const insertId = await dbManager.savePhoto(idolId, url, prompt);
+            if (insertId) {
                 this.currentRenderSession.saved = true;
+                this.currentRenderSession.photoId = insertId;
                 this.showToast("Đã lưu vào Kho dữ liệu an toàn", "success");
                 const allPhotos = await dbManager.getAllPhotos();
                 gameManager.checkAchievement('PHOTO_SAVED', allPhotos.length);
@@ -3236,7 +3767,7 @@ Output STRICTLY JSON:
                     const idol = cardEngine.getIdol(photo.idolId);
                     const name = idol ? idol.name : 'Unknown';
                     grid.innerHTML += `
-                        <div class="gallery-item" onclick="gameApp.viewGalleryPhoto('${photo.imageUrl ? photo.imageUrl.replace(/'/g, "\\'") : ''}', ${photo.id})" title="Click để phóng to">
+                        <div class="gallery-item" onclick="gameApp.viewGalleryPhoto('${photo.imageUrl ? photo.imageUrl.replace(/'/g, "\\'") : ''}', ${photo.id}, '${photo.idolId}')" title="Click để phóng to">
                             <img src="${photo.imageUrl}" alt="Shoot" loading="lazy">
                             <div class="gallery-overlay font-mono">${name}</div>
                         </div>
@@ -3261,18 +3792,47 @@ Output STRICTLY JSON:
         }
     },
 
-    viewGalleryPhoto(url, id = null) {
+    async viewGalleryPhoto(url, id = null, idolId = null) {
         document.getElementById('zoomed-img').src = url;
         this.currentGalleryViewId = id;
+        this.currentGalleryIdolId = idolId;
+        this.zoomedFromStudio = false;
         
         let btnDelete = document.getElementById('btn-gallery-delete');
         if (btnDelete) {
             btnDelete.style.display = id ? 'inline-flex' : 'none';
         }
+
+        let btnAvatar = document.getElementById('btn-gallery-avatar');
+        if (btnAvatar) {
+            btnAvatar.style.display = idolId ? 'inline-flex' : 'none';
+        }
         
         let btnPublish = document.getElementById('btn-gallery-publish');
         if (btnPublish) {
             btnPublish.style.display = id ? 'inline-flex' : 'none';
+            btnPublish.disabled = false;
+            btnPublish.title = "Đăng lên MuseGram";
+            btnPublish.style.opacity = '1';
+        }
+
+        let existingBadge = document.getElementById('zoom-published-badge');
+        if (existingBadge) existingBadge.remove();
+
+        if (id) {
+            const photo = await dbManager.getPhoto(id);
+            if (photo && photo.published) {
+                if (btnPublish) {
+                    btnPublish.style.opacity = '0.5';
+                    btnPublish.title = "Đã lên MuseGram";
+                    btnPublish.disabled = true;
+                }
+                const badge = document.createElement('div');
+                badge.id = 'zoom-published-badge';
+                badge.innerHTML = '✨ Đã Đăng MuseGram';
+                badge.style = "position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: var(--primary); padding: 8px 16px; border-radius: 20px; font-weight: bold; border: 1px solid var(--primary); z-index: 101; pointer-events: none;";
+                document.getElementById('zoom-modal').appendChild(badge);
+            }
         }
         
         document.getElementById('zoom-modal').style.display = 'flex';
@@ -3291,33 +3851,57 @@ Output STRICTLY JSON:
 
     async publishToMuseGramFromStudio() {
         if (!this.currentRenderSession || !this.currentRenderSession.url) return;
-        let btnPublish = document.getElementById('btn-studio-publish');
-        if (btnPublish) btnPublish.style.display = 'none';
 
         const idolId = document.getElementById('studio-idol-select').value;
         const idol = cardEngine.getIdol(idolId);
         if(!idol) return;
 
-        const photoId = await dbManager.savePhoto(idol.id, this.currentRenderSession.url, this.currentRenderSession.prompt, { published: true });
-        
-        // Cập nhật lại trạng thái saved để không bị đăng trùng
-        this.currentRenderSession.saved = true;
+        let photoId = this.currentRenderSession.photoId;
+        let photoData = null;
 
-        const photo = {
-            id: photoId,
-            idolId: idol.id,
-            imageUrl: this.currentRenderSession.url,
-            prompt: this.currentRenderSession.prompt,
-            timestamp: Date.now(),
-            published: true
-        };
-        
-        this.showToast("Ảnh đã lưu và đang tải lên MuseGram...", "info");
+        if (this.currentRenderSession.saved && photoId) {
+            photoData = await dbManager.getPhoto(photoId);
+            if (photoData && photoData.published) {
+                return this.showToast("Ảnh này đã được đăng lên MuseGram!", "info");
+            }
+        }
 
-        this.executeMuseGramPublish(idol, photo, null);
+        let btnPublish = document.getElementById('btn-studio-publish');
+        if (btnPublish) btnPublish.style.display = 'none';
+        
+        let btnGalleryPublish = document.getElementById('btn-gallery-publish');
+        if (btnGalleryPublish && document.getElementById('zoom-modal').style.display === 'flex') {
+            btnGalleryPublish.disabled = true;
+            btnGalleryPublish.style.opacity = '0.5';
+        }
+
+        if (!photoData) {
+            photoId = await dbManager.savePhoto(idol.id, this.currentRenderSession.url, this.currentRenderSession.prompt, { published: false });
+            
+            // Cập nhật lại trạng thái saved để không bị đăng trùng
+            this.currentRenderSession.saved = true;
+            this.currentRenderSession.photoId = photoId;
+
+            photoData = {
+                id: photoId,
+                idolId: idol.id,
+                imageUrl: this.currentRenderSession.url,
+                prompt: this.currentRenderSession.prompt,
+                timestamp: Date.now(),
+                published: false
+            };
+        }
+        
+        this.showToast("Đang chuẩn bị tải lên MuseGram...", "info");
+
+        this.executeMuseGramPublish(idol, photoData, null);
     },
 
     async publishToMuseGram() {
+        if (this.zoomedFromStudio && !this.currentGalleryViewId) {
+            return this.publishToMuseGramFromStudio();
+        }
+
         if (!this.currentGalleryViewId) return;
         const photo = await dbManager.getPhoto(this.currentGalleryViewId);
         if (!photo) return;
@@ -3332,11 +3916,12 @@ Output STRICTLY JSON:
         let btnPublish = document.getElementById('btn-gallery-publish');
         if (btnPublish) btnPublish.disabled = true;
     
+        this.showToast("Đang tải lên MuseGram...", "info");
         this.executeMuseGramPublish(idol, photo, btnPublish);
     },
 
     async executeMuseGramPublish(idol, photo, btnElement) {
-        this.showToast("Đang phân tích phản ứng của cộng đồng mạng...", "info");
+        this.startTask('musegram_post', 'Đang đăng tải & phân tích tương tác trên MuseGram...');
     
         const visualBonus = (idol.stats.visual > 50) ? (idol.stats.visual - 50) * 0.5 : 0;
         const scandalBonus = (idol.scandalRisk || 0) * 0.5;
@@ -3369,6 +3954,8 @@ Strictly output JSON only.`;
             const service = (provider === 'gemini') ? geminiService : pollinationsService;
             let result = (provider === 'gemini') ? await service.generateContent(promptText) : await service.generateText(promptText);
             
+            this.endTask('musegram_post');
+
             result = result.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
             const jsonStartIndex = result.indexOf('{');
             const jsonEndIndex = result.lastIndexOf('}');
@@ -3391,8 +3978,14 @@ Strictly output JSON only.`;
     
             this.showMuseGramResult(idol, photo.imageUrl, data);
     
-            if (btnElement) btnElement.style.display = 'none';
+            if (btnElement) {
+                // Because we are likely in the gallery view, let's refresh the badge
+                if (this.currentGalleryViewId === photo.id) {
+                    this.viewGalleryPhoto(photo.imageUrl, photo.id, photo.idolId);
+                }
+            }
         } catch (e) {
+            this.endTask('musegram_post');
             console.error(e);
             this.showToast("Không thể kết nối đến MuseGram lúc này.", "error");
             if (btnElement) btnElement.disabled = false;
@@ -3458,6 +4051,16 @@ Strictly output JSON only.`;
                 }
             }
         });
+    },
+
+    async setGalleryImageAsAvatar() {
+        if (!this.currentGalleryViewId || !this.currentGalleryIdolId) return;
+        
+        const success = await cardEngine.updateAvatar(this.currentGalleryIdolId, document.getElementById('zoomed-img').src);
+        if (success) {
+            this.refreshUI();
+            this.showToast("Đã đặt làm Avatar thành công!", "success");
+        }
     },
 
     executeFashionWeekBattle(idolId, rivalData) {
@@ -3533,7 +4136,7 @@ Strictly output JSON only.`;
         Nếu Tha hóa/Rủi ro cao, đây có thể là scandal tình ái, lộ ảnh nóng, thái độ trịch thượng.
         Nếu Áp lực cao, có thể là kiệt sức ngất xỉu, khóc lóc giữa đường.
         Tạo báo cáo Khủng hoảng.
-        Output ONLY JSON:
+        Output ONLY JSON (DO NOT add // comments inside the JSON):
         {
           "title": "Tiêu đề trang nhất báo lá cải",
           "content": "Chi tiết hình ảnh Paparazzi chụp được và dư luận (Tiếng Việt)",
@@ -3641,7 +4244,7 @@ Yêu cầu:
 - concept: Phong cách thời trang đặc trưng (Tiếng Anh).
 - agency: Tên công ty đối thủ (Tiếng Anh).
 - threatMessage: Lời thách thức hoặc lời đồn đại sắc bén về đối thủ bằng Tiếng Việt (mang tính chất dằn mặt, drama thời trang).
-Output ONLY JSON:
+Output ONLY JSON (DO NOT add // comments inside the JSON):
 {
   "name": "Stella Cruz",
   "concept": "Avant-garde / High Fashion",
@@ -3728,6 +4331,7 @@ No Markdown.`;
         const idol = cardEngine.getIdol(idolId);
         idol.fans = (idol.fans || 0) + 10000;
         idol.scandalRisk = Math.min(100, (idol.scandalRisk || 0) + 5);
+        idol.stats.scandal_risk = idol.scandalRisk;
         dbManager.saveIdolData(idol);
         this.showToast("Đã bơm 10,000 Fan ảo thành công. Rủi ro scandal tăng!", "success");
         document.getElementById('dialog-modal').style.display = 'none'; // Close
@@ -3815,44 +4419,128 @@ No Markdown.`;
             <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">Bạn phải xử lý dứt điểm trước khi mạng xã hội tẩy chay cô ấy!</p>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px; margin-top:15px;">
-                <button class="btn-action" style="background:#ef4444; color:#fff;" onclick="gameApp.resolveScandal('${idolId}', 'pay')">💸 CHI TIỀN BỊT MIỆNG ĐỐI TÁC (${costToBribe} 💰)</button>
-                <button class="btn-action" style="background:#f59e0b; color:#fff;" onclick="gameApp.resolveScandal('${idolId}', 'apology')">😢 BẮT MODEL ĐĂNG ĐÀN XIN LỖI (+30 Stress, -20 Hảo cảm)</button>
-                <button class="btn-action" style="background:var(--bg-elevated); color:var(--text-muted);" onclick="gameApp.resolveScandal('${idolId}', 'ignore')">🛑 MẶC KỆ DƯ LUẬN (Random Hậu Quả)</button>
+                <button class="btn-action" style="background:#ef4444; color:#fff;" onclick="gameApp.resolveScandalCrisis('${idolId}', 'pay')">💸 CHI TIỀN BỊT MIỆNG ĐỐI TÁC (${costToBribe} 💰)</button>
+                <button class="btn-action" style="background:#f59e0b; color:#fff;" onclick="gameApp.resolveScandalCrisis('${idolId}', 'apology')">😢 BẮT MODEL ĐĂNG ĐÀN XIN LỖI (+30 Stress, -20 Hảo cảm)</button>
+                <button class="btn-action" style="background:var(--bg-elevated); color:var(--text-muted);" onclick="gameApp.resolveScandalCrisis('${idolId}', 'ignore')">🛑 MẶC KỆ DƯ LUẬN (Random Hậu Quả)</button>
             </div>`,
             type: "info"
         });
     },
     
-    resolveScandal(idolId, action) {
+    resolveScandalCrisis(idolId, action) {
         const idol = cardEngine.getIdol(idolId);
         if(!idol) return;
         const costToBribe = idol.stats.fame * 10;
         
         document.getElementById('dialog-modal').style.display = 'none';
         
+        let reportMsg = "";
+        
         if (action === 'pay') {
             if (gameManager.state.money < costToBribe) return this.showToast("Bạn không đủ tiền để ém nhẹm tin đồn!", "error");
             gameManager.updateMoney(-costToBribe);
             idol.scandalRisk = Math.max(0, idol.scandalRisk - 30);
+            reportMsg = `<span style="color:var(--success)">Nguy cơ Phong sát: -30</span><br><span style="color:var(--error)">Ngân sách: -${costToBribe} 💰</span>`;
             this.showToast(`Bưng bít tin đồn thành công. Nhóm Báo lá cải đã lấy ${costToBribe}💰`, "success");
         } else if (action === 'apology') {
             idol.stress = Math.min(100, (idol.stress || 0) + 30);
             idol.affinity = Math.max(0, (idol.affinity || 0) - 20);
             idol.scandalRisk = Math.max(0, idol.scandalRisk - 15);
+            reportMsg = `<span style="color:var(--success)">Nguy cơ Phong sát: -15</span><br><span style="color:var(--error)">Áp lực (Stress): +30</span><br><span style="color:var(--error)">Hảo cảm: -20</span>`;
             this.showToast("Bức tâm thư lấy đi nước mắt dư luận. Rủi ro phong sát giảm, nhưng tâm lý Model tồi tệ đi.", "info");
         } else if (action === 'ignore') {
             if (Math.random() < 0.4) {
                 idol.scandalRisk = Math.min(100, idol.scandalRisk + 25);
+                reportMsg = `<span style="color:var(--error)">Dư luận phẫn nộ! Nguy cơ Phong sát: +25</span>`;
                 this.showToast("Dư luận giận dữ! Mọi thứ trở nên tồi tệ hơn!", "error");
                 if (idol.scandalRisk >= 100) this.showToast("BỊ PHONG SÁT ĐÓNG BĂNG KIẾM TIỀN CHỜ CHẾT!", "error");
             } else {
                 idol.scandalRisk = Math.max(0, idol.scandalRisk - 5);
                 idol.stats.fame += 5; // Hắc hồng
+                reportMsg = `<span style="color:var(--success)">Danh tiếng: +5 (Hắc hồng)</span><br><span style="color:var(--success)">Nguy cơ Phong sát: -5</span>`;
                 this.showToast("Scandal tự nhiên lắng xuống, mọi thứ lại bình thường. Thậm chí cô ta còn nổi tiếng lên!", "success");
             }
         }
+        idol.stats.scandal_risk = idol.scandalRisk;
         dbManager.saveIdolData(idol);
         this.refreshUI();
+        
+        setTimeout(() => {
+            this.showDialog({
+                title: "✅ BÁO CÁO SAU KHỦNG HOẢNG",
+                message: `<div style="text-align:center;">
+                    <p style="color:var(--text-muted); margin-bottom:15px;">Kết quả từ quyết định xử lý khủng hoảng của bạn:</p>
+                    <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; font-weight:bold; display:inline-block; text-align:left;">
+                        ${reportMsg}
+                    </div>
+                </div>`,
+                type: "info"
+            });
+        }, 800);
+    },
+
+    triggerHeadhunting(idolId) {
+        if (this.hasAnyTaskRunning() || document.getElementById('dialog-modal').style.display === 'flex') {
+            this.pendingHeadhunting = idolId;
+            return;
+        }
+
+        const idol = cardEngine.getIdol(idolId);
+        if(!idol) return;
+
+        // Cơ chế giữ chân siêu sao
+        this.showDialog({
+            title: `🤝 CƯỚP SIÊU SAO (HEADHUNTING)!`,
+            message: `<div style="text-align:left;">
+            <p style="color:#ef4444; font-weight:bold;">Một Agency đối thủ đang tiếp cận ${idol.name}!</p>
+            <p style="font-size:13px; color:var(--text-main);">Họ hứa hẹn mức lương cao hơn và điều kiện làm việc tốt hơn. Do Căng thẳng của cô ấy đang cao hoặc Hảo cảm với bạn thấp, cô ấy đang dao động.</p>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">Bạn cần đãi ngộ tốt hơn để giữ cô ấy lại, nếu không cô ấy sẽ rời công ty!</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:15px;">
+                <button class="btn-action" style="background:var(--primary); color:#000;" onclick="gameApp.resolveHeadhunting('${idolId}', 'spa')">🏖️ THIẾT ĐÃI KỲ NGHỈ SPA (1500 💰)</button>
+                <button class="btn-action" style="background:#f59e0b; color:#fff;" onclick="gameApp.resolveHeadhunting('${idolId}', 'talk')">💬 THUYẾT PHỤC BẰNG TÌNH CẢM (-50 Stress, +10 Hảo cảm)</button>
+                <button class="btn-action" style="background:var(--bg-elevated); color:var(--text-muted);" onclick="gameApp.resolveHeadhunting('${idolId}', 'let_go')">🚪 ĐỂ CÔ ẤY RA ĐI</button>
+            </div>`,
+            type: "info"
+        });
+    },
+
+    async resolveHeadhunting(idolId, action) {
+        const idol = cardEngine.getIdol(idolId);
+        if(!idol) return;
+        
+        document.getElementById('dialog-modal').style.display = 'none';
+
+        if (action === 'spa') {
+            if (gameManager.state.money < 1500) {
+                this.showToast("Bạn không đủ tiền! Cô ấy đã bỏ đi...", "error");
+                await cardEngine.deleteIdol(idolId);
+            } else {
+                gameManager.updateMoney(-1500);
+                idol.stress = 0;
+                idol.affinity = Math.min(100, (idol.affinity || 0) + 30);
+                this.showToast(`Bạn vung tiền mua cho ${idol.name} một chuyến du lịch hạng sang. Cô ấy quyết định ở lại!`, "success");
+            }
+        } else if (action === 'talk') {
+            if ((idol.affinity || 30) < 50) {
+                this.showToast(`Hảo cảm quá thấp! ${idol.name} không tin những lời hứa suông và đã rời đi!`, "error");
+                await cardEngine.deleteIdol(idolId);
+            } else {
+                idol.stress = Math.max(0, (idol.stress || 0) - 50);
+                idol.affinity = Math.min(100, (idol.affinity || 0) + 10);
+                this.showToast(`${idol.name} cảm động trước sự chân thành của bạn và xé bản hợp đồng của đối thủ.`, "success");
+            }
+        } else if (action === 'let_go') {
+            this.showToast(`Bạn lạnh lùng để ${idol.name} rời đi sang Agency khác.`, "info");
+            await cardEngine.poachIdol(idolId);
+        }
+
+        if (cardEngine.getIdol(idolId)) {
+            dbManager.saveIdolData(idol);
+        }
+        
+        this.refreshUI();
+        if (typeof this.renderCards === 'function') this.renderCards();
     }
 };
 

@@ -13,7 +13,7 @@ class NarrativeEvent {
             Chỉ số hiện tại: Fame ${idol.stats.fame}, Visual ${idol.stats.visual}, Risk ${idol.stats.scandal_risk}.
 
             Tình huống: Tạo 1 tình huống khủng hoảng sau sự kiện (tiếng Việt).
-            TRẢ VỀ JSON CHUẨN:
+            TRẢ VỀ JSON CHUẨN (TUYỆT ĐỐI KHÔNG DÙNG CHÚ THÍCH // TRONG JSON):
             {
                 "scenario": "Mô tả tình huống...",
                 "choices": [

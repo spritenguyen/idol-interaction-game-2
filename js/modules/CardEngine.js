@@ -1,6 +1,7 @@
 class CardEngine {
     constructor() {
         this.roster = new Map();
+        this.poachedRoster = new Map();
         this.isInitialized = false;
     }
 
@@ -13,10 +14,18 @@ class CardEngine {
             if (savedIdols && savedIdols.length > 0) {
                 savedIdols.forEach(idol => {
                     if (idol && idol.id && idol.name && idol.stats && typeof idol.stats === 'object') {
-                        this.roster.set(idol.id, idol);
-                        validCount++;
-                        if(typeof gameManager !== 'undefined') {
-                            gameManager.checkAchievement('STATS_UPDATE', idol.stats);
+                        if (!idol.age) {
+                            idol.age = Math.floor(Math.random() * 10) + 18; // 18-27
+                            dbManager.saveIdolData(idol);
+                        }
+                        if (idol.status === 'poached' || idol.status === 'fired') {
+                            this.poachedRoster.set(idol.id, idol);
+                        } else {
+                            this.roster.set(idol.id, idol);
+                            validCount++;
+                            if(typeof gameManager !== 'undefined') {
+                                gameManager.checkAchievement('STATS_UPDATE', idol.stats);
+                            }
                         }
                     } else {
                         invalidCount++;
@@ -102,9 +111,9 @@ class CardEngine {
         }
         
         const tierInstructions = {
-            'street': "Họ là gương mặt mới tinh (Tân binh/Amateur). Các chỉ số (Fame, Visual) chỉ ở mức thấp hoặc trung bình (10-40). Trừ phi nổi bật lắm thì mới Visual cao (50).",
-            'pro': "Họ đã có kinh nghiệm (Professional/A-Lister). Chỉ số (Fame, Visual) ở mức khá đến cao (40-75).",
-            'global': "Họ phải là SIÊU SAO (Global Super Star). Chỉ số (Fame, Visual) ở mức cực cao (75-100)."
+            'street': "Họ là gương mặt mới tinh (Tân binh/Amateur), HOÀN TOÀN LÀ NHÂN VẬT HƯ CẤU (Fictional). Các chỉ số (Fame, Visual) chỉ ở mức thấp hoặc trung bình (10-40). Trừ phi nổi bật lắm thì mới Visual cao (50).",
+            'pro': "Họ đã có kinh nghiệm chuyên nghiệp. Có thể là NGƯỜI MẪU/KOL NGOÀI ĐỜI THỰC HẠNG TRUNG (Real-life, tỷ lệ 30%) hoặc hư cấu (70%). Chỉ số (Fame, Visual) ở mức khá đến cao (40-75).",
+            'global': "Họ phải là SIÊU SAO ĐÌNH ĐÁM QUỐC TẾ, NGƯỜI NỔI TIẾNG HOẶC IDOL CÓ THẬT NGOÀI ĐỜI (Real-life celebrities / super models - ưu tiên 90%). Chỉ số (Fame, Visual) ở mức cực cao (75-100) và câu chuyện phải khớp với đời thực của họ nếu có thật."
         };
 
         const exactQuery = query || 'Mẫu tự do';
@@ -113,20 +122,24 @@ class CardEngine {
         const systemPrompt = `Bạn là một Nhà Tuyển Dụng Tài Năng (Senior Talent Scout) xuất sắc trong ngành giải trí.
 Dựa trên yêu cầu: "${exactQuery}", hãy tìm hoặc tạo ra BẤT KỲ 1 hồ sơ Model/Idol/Talent nào (nam hoặc nữ) phù hợp nhất với phong cách ${tier.toUpperCase()}.
 ${tierInstructions[tier]}
+Trường hợp là nhân vật có thật ngoài đời, HÃY DÙNG TÊN THẬT, tiểu sử, số đo (nếu có thể) và các thông tin phản ánh đúng con người thực của họ.
 Tùy thuộc vào yêu cầu, nội suy ra tiểu sử đặc biệt, chức danh độc đáo, và các chỉ số (Stats).${exclusionFilter}
 
-YÊU CẦU BẮT BUỘC: Trả về **DUY NHẤT** một JSON hợp lệ. KHÔNG markdown, KHÔNG dùng \`\`\`json, KHÔNG giải thích.
+YÊU CẦU BẮT BUỘC: Trả về **DUY NHẤT** một JSON hợp lệ. KHÔNG markdown, KHÔNG dùng \`\`\`json, KHÔNG giải thích, TUYỆT ĐỐI KHÔNG chứa chú thích (//).
 Cấu trúc JSON chuẩn:
 {
     "name": "Tên độc đáo / Biệt danh",
     "nationality": "Quốc tịch/Vùng lãnh thổ (VD: Vietnamese, Korean, American...)",
     "gender": "Nam/Nữ",
+    "age": 20,
     "concept": "Phong cách/Nghề nghiệp cụ thể",
+    "isReal": true,
     "bio": "Câu chuyện nền ngắn gọn (Tiếng Việt) nhưng cuốn hút",
+    "physicalTraits": "Detailed physical description in English (hair color/style, eye color/shape, facial structure, skin tone, distinctive marks). Mandatory for consistent AI image generation.",
     "stats": {
-        "fame": 30, // Điều chỉnh mức độ nổi bật (Từ 10->100 dựa vào tier)
-        "visual": 70, // Điều chỉnh sắc vóc (Từ 10->100 dựa vào tier)
-        "scandal_risk": 15 // Tỉ lệ rủi ro (5->80)
+        "fame": 30,
+        "visual": 70,
+        "scandal_risk": 15
     },
     "mood": "Bình thường",
     "measurements": {
@@ -173,8 +186,8 @@ Cấu trúc JSON chuẩn:
                 return {
                     id: 'id_' + Date.now(),
                     name: data.name, nationality: data.nationality || "Unknown",
-                    concept: data.concept, bio: data.bio, stats: data.stats,
-                    gender: data.gender || "Nữ", level: data.level || 1,
+                    concept: data.concept, bio: data.bio, stats: data.stats, isReal: data.isReal || false,
+                    age: data.age || 20, gender: data.gender || "Nữ", level: data.level || 1, physicalTraits: data.physicalTraits || "",
                     mood: data.mood || "Bình thường", measurements: data.measurements || {height: "?", weight: "?", bust: "?", waist: "?", hips: "?"},
                     affinity: data.affinity || 30, stress: data.stress || 0,
                     traits: data.traits || ["Khó đoán"],
@@ -195,13 +208,20 @@ Cấu trúc JSON chuẩn:
         newIdol.nationality = tempData.nationality || "Unknown";
         newIdol.measurements = tempData.measurements;
         newIdol.mood = tempData.mood;
+        newIdol.isReal = tempData.isReal || false;
+        newIdol.physicalTraits = tempData.physicalTraits || "";
+        newIdol.age = tempData.age || 20;
         newIdol.affinity = tempData.affinity || 30;
         newIdol.stress = tempData.stress || 0;
+        newIdol.scandalRisk = tempData.stats ? (tempData.stats.scandal_risk || 0) : 0;
+        newIdol.stats.scandal_risk = newIdol.scandalRisk;
         await dbManager.saveIdolData(newIdol);
 
         const nat = tempData.nationality && tempData.nationality !== "Unknown" ? tempData.nationality + ' ' : '';
+        const ageStr = (tempData.age ? tempData.age + 'yo ' : '');
+        const traitStr = tempData.physicalTraits ? ` Facial/Body traits: ${tempData.physicalTraits}.` : '';
         const anatomyOpt = "perfect human anatomy, symmetrical beautiful face, flawless realistic natural eyes, perfect detailed hands, masterpiece, photorealistic, 8k. NO deformed, NO bad anatomy, NO bad hands, NO missing fingers";
-        const avatarPrompt = `Professional square headshot portrait of a ${nat}model named ${tempData.name}, ${tempData.concept}, high-fashion editorial, cinematic lighting, shot on Hasselblad 85mm, extremely detailed, clean background, ${anatomyOpt}.`;
+        const avatarPrompt = `Professional square headshot portrait of a ${ageStr}${nat}model named ${tempData.name}, ${tempData.concept}${traitStr}, high-fashion editorial, cinematic lighting, shot on Hasselblad 85mm, extremely detailed, clean background, ${anatomyOpt}.`;
 
         pollinationsService.generateImage(avatarPrompt).then(async (avatarUrl) => {
             if (avatarUrl) {
@@ -214,9 +234,42 @@ Cấu trúc JSON chuẩn:
     }
 
     async deleteIdol(id) {
-        if (this.roster.has(id)) {
-            this.roster.delete(id);
+        // Soft delete or completely remove
+        if (this.poachedRoster.has(id)) {
+            this.poachedRoster.delete(id);
             return await dbManager.deleteIdolData(id);
+        }
+        if (this.roster.has(id)) {
+            const idol = this.roster.get(id);
+            idol.status = 'fired';
+            idol.agency = 'none';
+            this.roster.delete(id);
+            this.poachedRoster.set(id, idol);
+            return await dbManager.saveIdolData(idol);
+        }
+        return false;
+    }
+
+    async poachIdol(id) {
+        if (this.roster.has(id)) {
+            const idol = this.roster.get(id);
+            idol.status = 'poached';
+            idol.agency = 'rival';
+            this.roster.delete(id);
+            this.poachedRoster.set(id, idol);
+            return await dbManager.saveIdolData(idol);
+        }
+        return false;
+    }
+
+    async unPoachIdol(id) {
+        if (this.poachedRoster.has(id)) {
+            const idol = this.poachedRoster.get(id);
+            delete idol.status;
+            idol.agency = 'player';
+            this.poachedRoster.delete(id);
+            this.roster.set(id, idol);
+            return await dbManager.saveIdolData(idol);
         }
         return false;
     }
@@ -226,7 +279,7 @@ Cấu trúc JSON chuẩn:
         if (!idol) return null;
 
         const prompt = `Phân tích biến động thị trường cho: "${idol.name}". Stats: Fame(${idol.stats.fame}), Visual(${idol.stats.visual}), Risk(${idol.stats.scandal_risk}). 
-        Tạo 1 sự kiện trend (tiếng Việt). JSON: {"new_stats": {"fame": X, "visual": Y, "scandal_risk": Z}, "trend_reason": "..."}`;
+        Tạo 1 sự kiện trend (tiếng Việt). BẮT BUỘC TRẢ VỀ JSON (Không chứa chú thích //): {"new_stats": {"fame": X, "visual": Y, "scandal_risk": Z}, "trend_reason": "..."}`;
 
         try {
             let res;

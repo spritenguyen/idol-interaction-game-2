@@ -11,14 +11,14 @@
 <body data-font="be-vietnam">
 
 <div id="toast-container"></div>
-<div id="task-queue-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px;"></div>
+<div id="task-queue-container" style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 9998; transition: all 0.3s ease;"></div>
 
 <div class="app-layout">
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-title-group">
-                <div class="version-tag gradient-text" style="font-weight: bold;">v2.3: MODEL EXPANSION</div>
+                <div class="version-tag gradient-text" style="font-weight: bold;">v2.5 (Cine-Tech AI): RIVALRY SHOWBIZ</div>
                 <h1>MUSE<br>ARCHITECT</h1>
             </div>
             
@@ -47,8 +47,17 @@
             <button id="nav-btn-shop" class="nav-btn" onclick="gameApp.switchView('shop')" title="Cửa hàng vật phẩm">
                 <span>🛍️</span> CỬA HÀNG
             </button>
+            <button id="nav-btn-inventory" class="nav-btn" onclick="gameApp.openInventory()" title="Kho đồ của bạn">
+                <span>🎒</span> TÚI ĐỒ
+            </button>
             <button id="nav-btn-scout" class="nav-btn" onclick="gameApp.switchView('scout')" title="Tìm kiếm Model tiềm năng">
                 <span>📡</span> SCOUT
+            </button>
+            <button id="nav-btn-spa" class="nav-btn" onclick="gameApp.switchView('spa')" title="Trung tâm hồi phục sắc đẹp">
+                <span>💆‍♀️</span> SPA
+            </button>
+            <button id="nav-btn-brand" class="nav-btn" onclick="gameApp.switchView('brand')" title="Đấu trường thương hiệu">
+                <span>💎</span> THƯƠNG HIỆU
             </button>
             <button id="nav-btn-studio" class="nav-btn" onclick="gameApp.switchView('studio')" title="The Studio Lab">
                 <span>📸</span> THE STUDIO
@@ -131,6 +140,12 @@
                     <div class="map-pin-desc">Spa thư giãn, trị liệu da, tập luyện gym và can thiệp thẩm mỹ.</div>
                 </div>
                 
+                <div class="map-pin rivals" onclick="gameApp.switchView('rivals')">
+                    <div class="map-pin-icon">⚔️</div>
+                    <div class="map-pin-label">ĐỐI THỦ (RIVALS)</div>
+                    <div class="map-pin-desc">Cạnh tranh thị phần, đoạt show và theo dõi động tĩnh từ Agency đối thủ.</div>
+                </div>
+                
                 <div class="map-pin underground" onclick="gameApp.switchView('underground')">
                     <div class="map-pin-icon">♠️</div>
                     <div class="map-pin-label">THE UNDERGROUND</div>
@@ -170,15 +185,60 @@
 
         <!-- SHOP VIEW -->
         <section id="shop-view" class="view-section hidden">
-            <div class="view-header">
+            <div class="view-header" style="background: linear-gradient(135deg, rgba(20,20,30,0.8), rgba(0,0,0,0.9)); backdrop-filter: blur(10px); padding: 25px; border-radius: 16px; border: 1px solid rgba(251,191,36,0.2); margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                 <div>
-                    <h2>🛍️ CỬA HÀNG VẬT PHẨM</h2>
-                    <p class="view-desc">Sử dụng tiền mặt hoặc kim cương để mua vật phẩm hỗ trợ Model.</p>
+                    <h2 style="font-size: 26px; margin-bottom: 5px; text-transform: uppercase; background: linear-gradient(90deg, #fcd34d, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 20px rgba(245,158,11,0.2);">🛍️ The Luxury Mall</h2>
+                    <p class="view-desc" style="font-size: 14px; color: var(--text-muted); margin:0;">Boutique thời trang, chăm sóc sắc đẹp và những món quà xa xỉ.</p>
                 </div>
-                <button class="btn-action btn-accent" onclick="gameApp.openInventory()">🎒 TÚI ĐỒ CỦA BẠN</button>
+                <button class="btn-action btn-accent" style="box-shadow: 0 4px 15px rgba(251,191,36,0.3); border-radius: 8px; padding: 12px 24px; font-weight: bold; background: linear-gradient(135deg, var(--gold), #b45309); border:none; color:black;" onclick="gameApp.openInventory()">🎒 KHO ĐỒ (TÚI)</button>
             </div>
+
+            <!-- Shop Categories Tabs -->
+            <div class="shop-tabs" style="display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <button class="btn-action shop-tab-btn active" data-category="all" onclick="gameApp.filterShop('all', this)" style="background: var(--primary); color: #000; border-radius: 20px; font-weight: bold; padding: 8px 16px;">Tất cả</button>
+                <button class="btn-action shop-tab-btn" data-category="health" onclick="gameApp.filterShop('health', this)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-main); border-radius: 20px; padding: 8px 16px;">🥤 Thức Uống</button>
+                <button class="btn-action shop-tab-btn" data-category="beauty" onclick="gameApp.filterShop('beauty', this)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-main); border-radius: 20px; padding: 8px 16px;">💄 Thẩm Mỹ Viện</button>
+                <button class="btn-action shop-tab-btn" data-category="gift" onclick="gameApp.filterShop('gift', this)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-main); border-radius: 20px; padding: 8px 16px;">🎁 Quà Tặng VIP</button>
+                <button class="btn-action shop-tab-btn" data-category="outfit" onclick="gameApp.filterShop('outfit', this)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-main); border-radius: 20px; padding: 8px 16px;">👗 Boutique Váy</button>
+                <button class="btn-action shop-tab-btn" data-category="shoes" onclick="gameApp.filterShop('shoes', this)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-main); border-radius: 20px; padding: 8px 16px;">👠 Gian Hàng Cao Gót</button>
+                <button class="btn-action shop-tab-btn" data-category="training" onclick="gameApp.filterShop('training', this)" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-main); border-radius: 20px; padding: 8px 16px;">🎓 Khóa Đào Tạo</button>
+                <button class="btn-action shop-tab-btn" data-category="premium" onclick="gameApp.filterShop('premium', this)" style="background: rgba(236,72,153,0.1); border: 1px solid var(--secondary); color: var(--secondary); border-radius: 20px; padding: 8px 16px; margin-left: auto;">💎 Diamond Shop</button>
+            </div>
+
             <div class="shop-grid" id="shop-grid">
                 <!-- Rendered via JS -->
+            </div>
+        </section>
+
+        <!-- RIVALS VIEW -->
+        <section id="rivals-view" class="view-section hidden">
+            <div class="view-header">
+                <div>
+                    <h2 style="color: var(--secondary);">⚔️ ĐỐI THỦ (RIVAL AGENCIES)</h2>
+                    <p class="view-desc" style="color: var(--text-muted);">Trí tuệ nhân tạo sẽ tạo ra các Agency đối thủ cạnh tranh thị phần liên tục với bạn.</p>
+                </div>
+                <button class="btn-action btn-primary" onclick="gameApp.generateRivalNews()">📰 TIN TỨC ĐỐI THỦ</button>
+            </div>
+            
+            <div class="rivals-layout" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div class="glass-panel">
+                    <h3 style="color: var(--secondary); margin-bottom: 16px;">BẢNG XẾP HẠNG THƯƠNG HIỆU</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Theo dõi danh tiếng của các công ty quản lý trong giới showbiz.</p>
+                    <div id="rivals-leaderboard" style="display:flex; flex-direction: column; gap:10px;">
+                        <p style="color:var(--text-muted); font-style:italic;">Đang cập nhật AI Data...</p>
+                    </div>
+                </div>
+                
+                <div class="glass-panel">
+                    <h3 style="color: var(--secondary); margin-bottom: 16px;">SỰ KIỆN & TRANH ĐOẠT</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Các đối thủ có thể tạo ra scandal, cướp hợp đồng, hoặc thách đấu người mẫu.</p>
+                    <div id="rivals-events">
+                        <!-- AI Generated Content -->
+                        <div style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px dashed var(--secondary);">
+                            <p style="color: var(--text-muted); font-size: 14px; text-align: center;">Chưa có biến cố nào.<br>Bấm "TIN TỨC ĐỐI THỦ" để cập nhật tình hình Showbiz.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -214,7 +274,7 @@
                                 <h4 style="color:var(--text-main); margin:0;">Chụp Ảnh Nhạy Cảm</h4>
                                 <span style="color:var(--primary); font-weight:bold;">+8,000 💰</span>
                             </div>
-                            <p style="font-size: 11px; color:var(--text-muted); margin-bottom: 12px;">Điều kiện: Căng thẳng > 50 hoặc LV > 2. Hậu quả: Tha hóa +10, Căng thẳng +20, Scandal Risk +5%.</p>
+                            <p style="font-size: 11px; color:var(--text-muted); margin-bottom: 12px;">Điều kiện: Căng thẳng &gt; 50 hoặc LV &gt; 2. Hậu quả: Tha hóa +10, Căng thẳng +20, Scandal Risk +5%.</p>
                             <button class="btn-action w-full" style="background: #4a0f12; color: #ef4444;" onclick="gameApp.triggerUndergroundJob('photo')">TÌM MODEL NGAY</button>
                         </div>
 
@@ -223,7 +283,7 @@
                                 <h4 style="color:var(--text-main); margin:0;">Tiếp Khách VIP Ngầm</h4>
                                 <span style="color:var(--primary); font-weight:bold;">+15,000 💰</span>
                             </div>
-                            <p style="font-size: 11px; color:var(--text-muted); margin-bottom: 12px;">Điều kiện: LV > 3. Hậu quả: Tha hóa +15, Căng thẳng +30, Scandal Risk +10%.</p>
+                            <p style="font-size: 11px; color:var(--text-muted); margin-bottom: 12px;">Điều kiện: LV &gt; 3. Hậu quả: Tha hóa +15, Căng thẳng +30, Scandal Risk +10%.</p>
                             <button class="btn-action w-full" style="background: #4a0f12; color: #ef4444;" onclick="gameApp.triggerUndergroundJob('vip')">TÌM MODEL NGAY</button>
                         </div>
 
@@ -232,7 +292,7 @@
                                 <h4 style="color:var(--text-main); margin:0;">Dự Tiệc Đen (The Dark Party)</h4>
                                 <span style="color:var(--primary); font-weight:bold;">+30,000 💰</span>
                             </div>
-                            <p style="font-size: 11px; color:var(--text-muted); margin-bottom: 12px;">Điều kiện: Tha hóa > 10. Hậu quả: Tha hóa +25, Căng thẳng +40, Hảo Cảm -20, Scandal Risk +20%.</p>
+                            <p style="font-size: 11px; color:var(--text-muted); margin-bottom: 12px;">Điều kiện: Tha hóa &gt; 10. Hậu quả: Tha hóa +25, Căng thẳng +40, Hảo Cảm -20, Scandal Risk +20%.</p>
                             <button class="btn-action w-full" style="background: #4a0f12; color: #ef4444;" onclick="gameApp.triggerUndergroundJob('party')">TÌM MODEL NGAY</button>
                         </div>
                     </div>
@@ -297,7 +357,7 @@
             </div>
             
             <div class="scout-control-panel glass-panel" style="display:flex; flex-direction:column; gap:15px;">
-                <input type="text" id="scout-query" placeholder="VD: Retro 90s, Cyberpunk... (Nhập yêu cầu chi tiết của sếp)">
+                <input type="text" id="scout-query" placeholder=" VD: Retro 90s, Cyberpunk... (Nhập yêu cầu chi tiết của sếp)" value="charming, friendly, aspiring model, bubbly personality, with a hint of mischief">
                 
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                     <div style="border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; text-align: center; background: rgba(0,0,0,0.3);">
@@ -321,6 +381,15 @@
             </div>
             <div class="scout-hint mt-10">
                 <p>Mẹo: Cấp casting càng cao, tài nguyên AI sử dụng càng sâu để tạo ra những nhân vật có chiều sâu và đặc quyền tốt hơn.</p>
+            </div>
+
+            <!-- CHUỘC LẠI MODEL CŨ -->
+            <div id="scout-poached-container" style="margin-top: 30px; border-top: 1px dashed var(--border-color); padding-top: 20px;">
+                <h3 style="color:var(--error); margin-bottom: 10px;">🔥 CHỢ ĐEN: CHUỘC MODEL / ĐI SĂN ĐỐI THỦ</h3>
+                <p style="font-size:12px; color:var(--text-muted); margin-bottom: 15px;">Những Model đã bị đối thủ nẫng tay trên hoặc bị sa thải. Bạn có thể vung tiền chuộc họ về bằng gấp đôi số tiền lúc họ rời đi (Mặc định: 50,000💰 hoặc 50💎).</p>
+                <div id="scout-poached-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+                    <!-- Render by JS -->
+                </div>
             </div>
         </section>
 
@@ -416,7 +485,7 @@
             </div>
 
             <div class="setting-group">
-                <h4 class="group-title">Visual Engine</h4>
+                <h4 class="group-title"> Visual Engine</h4>
                 <label>Visual Engine Credentials</label>
                 <input type="password" id="polli-credential" placeholder="Nhập key/proxy..." oninput="gameApp.saveSettings()">
                 <div class="toggle-row mt-10">
@@ -428,9 +497,27 @@
                     <option value="flux">FLUX (Hyper-Realistic)</option>
                     <option value="zimage">ZIMAGE (Cinematic)</option>
                     <option value="qwen-image">QWEN (Balanced)</option>
-                    <option value="wan-image">WAN (Artistic)</option>
+                    <option value="gptimage-large">GPT Image 1.5 (Artistic)</option>
                 </select>
                 <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Mặc định cho Studio ảnh. Hệ thống sẽ có cảnh báo khi Model hết phấn hoa chuyển vùng Free.</p>
+            </div>
+
+            <div class="setting-group">
+                <h4 class="group-title">Tùy chỉnh Sidebar</h4>
+                <p style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">Chọn menu hiển thị (Bản đồ là cố định).</p>
+                <div id="sidebar-customize-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size:13px;">
+                    <label><input type="checkbox" value="management" onchange="gameApp.updateSidebarVisibility()"> Đội Hình</label>
+                    <label><input type="checkbox" value="inventory" onchange="gameApp.updateSidebarVisibility()"> Túi Đồ</label>
+                    <label><input type="checkbox" value="underground" onchange="gameApp.updateSidebarVisibility()"> Underground</label>
+                    <label><input type="checkbox" value="jobs" onchange="gameApp.updateSidebarVisibility()"> Công Việc</label>
+                    <label><input type="checkbox" value="shop" onchange="gameApp.updateSidebarVisibility()"> Cửa Hàng</label>
+                    <label><input type="checkbox" value="scout" onchange="gameApp.updateSidebarVisibility()"> Scout</label>
+                    <label><input type="checkbox" value="spa" onchange="gameApp.updateSidebarVisibility()"> Spa Beauty</label>
+                    <label><input type="checkbox" value="studio" onchange="gameApp.updateSidebarVisibility()"> The Studio</label>
+                    <label><input type="checkbox" value="condo" onchange="gameApp.updateSidebarVisibility()"> Khu Căn Hộ</label>
+                    <label><input type="checkbox" value="brand" onchange="gameApp.updateSidebarVisibility()"> Thương Hiệu</label>
+                    <label><input type="checkbox" value="achievements" onchange="gameApp.updateSidebarVisibility()"> Thành Tựu</label>
+                </div>
             </div>
 
             <div class="setting-group">
@@ -492,6 +579,13 @@
                 <li><strong>Fame (Nhận diện):</strong> Chỉ số quyết định đẳng cấp Model. Fame cao mới có thể nhận hợp đồng lớn và quảng cáo VIP.</li>
                 <li><strong>Stress (Căng thẳng):</strong> Làm việc (Jobs) hoặc Tham gia "Thế giới ngầm" sẽ tăng Stress. Stress cao làm giảm hiệu suất, tăng nguy cơ khủng hoảng. Cần cho Model đi Spa để giảm Stress.</li>
                 <li><strong>Tha Hóa (Corruption):</strong> Tăng lên nếu ép Model làm việc quá sức, phẫu thuật thẩm mỹ quá đà, hoặc ký "Hợp Đồng Hắc Ám". Tha hóa quá cao (100) sẽ biến Model thành "Thực thể bóng tối" (Dark Muse).</li>
+                <li><strong>Scandal Risk (Nguy cơ Phong Sát):</strong> Nhận các hợp đồng ngầm, bơm fan ảo hoặc chụp hình gợi cảm sẽ tăng Risk. Nếu đạt 100%, Model sẽ bị "Phong Sát" (Cấm sóng vĩnh viễn). Cách giảm Risk:
+                    <ul>
+                        <li><span style="color:var(--error);">Cách 1: Mua "Truyền Thông" tại Thế Giới Ngầm (-30 Risk nhưng tốn 10,000💰)</span></li>
+                        <li><span style="color:var(--gold);">Cách 2: Sự kiện Khủng Hoảng (Ngẫu nhiên khi Risk &gt; 50). Chi tiền bưng bít (-30 Risk) hoặc bắt Model xin lỗi (-15 Risk, +30 Stress).</span></li>
+                        <li><span style="color:#60a5fa;">Cách 3: Mua "Thẻ Truyền Thông VIP" ở Shop Premium (Tẩy 30 Risk, tốn 50 Kim Cương 💎).</span></li>
+                    </ul>
+                </li>
                 <li><strong>Hảo Cảm (Affinity):</strong> Thể hiện độ thân thiết giữa Sếp (bạn) và Model. Quà tặng hoặc trò chuyện vui vẻ tăng Hảo cảm. Khước từ vòi vĩnh sẽ làm giảm Hảo cảm.</li>
             </ul>
 
@@ -504,6 +598,15 @@
 
             <h3 style="color: var(--gold); margin-top: 15px;">5. Cẩn Thận Với "Thế Giới Ngầm" (Underground)</h3>
             <p>Một tính năng nguy hiểm: Sếp có thể "bán rẻ" (Phẫu thuật chợ đen, Hợp đồng hắc ám...) để đổi lấy số tiền cực lớn trong chớp mắt. Tuy nhiên, rủi ro là chỉ số Tha hóa và Stress tăng vọt kịch trần, làm hỏng hoàn toàn sự nghiệp tương lai của Model!</p>
+
+            <h3 style="color: var(--gold); margin-top: 15px;">6. Update Phiên Bản Mới (Cạnh Tranh & Đối Thủ Khốc Liệt)</h3>
+            <p>Showbiz là một chiến trường, AI-Agency của bạn không hề đơn độc. Phiên bản mới cập nhật thêm các tính năng sinh tồn:</p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Bảng Xếp Hạng Kols:</strong> Cạnh tranh thứ hạng với các Agency đối thủ (Starfall, Onyx, Aurora).</li>
+                <li><strong>Cướp Thầu (Bidding War):</strong> Khi nhận Hợp đồng Brand, đối thủ có thể nhảy vào tranh cướp. Sếp cần tung thêm ngân sách PR để giữ hợp đồng!</li>
+                <li><strong>Chơi Xấu Đối Thủ (Sabotage):</strong> Trong Thế Giới Ngầm, Sếp có thể thuê lều báo "Bài bóc phốt" để dìm đánh sập danh tiếng của đối thủ trên BXH.</li>
+                <li><strong>Cướp Siêu Sao (Headhunting):</strong> Nếu Model có "Stress &gt; 50" hoặc "Hảo Cảm &lt; 40", đối thủ sẽ lén lút tiếp cận mời mọc cô ấy rời công ty. Sếp phải chu cấp (Spa/Tiền) hoặc dùng lời nói chân thành để giữ chân Gà cưng, nếu không cô ấy sẽ bị nẫng mất!</li>
+            </ul>
         </div>
     </div>
 </div>
@@ -520,7 +623,8 @@
 
 <div id="zoom-modal" class="modal zoom-wrap">
     <div class="zoom-controls" style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 100;">
-        <button class="tool-btn" id="btn-gallery-publish" onclick="gameApp.publishToMuseGram(); event.stopPropagation()" title="Đăng lên MuseGram">🌐 MuseGram</button>
+        <button class="tool-btn" id="btn-gallery-avatar" onclick="gameApp.setGalleryImageAsAvatar(); event.stopPropagation()" title="Đặt làm Ảnh đại diện">👤</button>
+        <button class="tool-btn" id="btn-gallery-publish" onclick="gameApp.publishToMuseGram(); event.stopPropagation()" title="Đăng lên MuseGram">🌐</button>
         <button class="tool-btn" onclick="gameApp.downloadGalleryImage(); event.stopPropagation()" title="Tải xuống thiết bị">⬇️</button>
         <button class="tool-btn" id="btn-gallery-delete" onclick="gameApp.deleteGalleryImage(); event.stopPropagation()" title="Xóa ảnh này">🗑️</button>
         <button class="tool-btn" onclick="document.getElementById('zoom-modal').style.display='none'; event.stopPropagation()" title="Đóng">✖</button>

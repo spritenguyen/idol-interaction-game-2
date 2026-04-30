@@ -26,19 +26,48 @@ class StudioDirector {
         }
 
         let outfitContext = "";
-        if (idol.equippedOutfit && idol.outfits) {
-            const outfitObj = idol.outfits.find(o => o.id === idol.equippedOutfit);
-            if (outfitObj) {
-                outfitContext = `\nMANDATORY OUTFIT FOR THIS SHOOT: The model MUST wear "${outfitObj.promptEffect}". Include this exactly in the visualPrompt.`;
+        if (typeof gameManager !== 'undefined') {
+            if (idol.equippedOutfit) {
+                const outfitItem = gameManager.shopItems.find(i => i.id === idol.equippedOutfit);
+                if (outfitItem && outfitItem.effect) {
+                    outfitContext += `\nMANDATORY OUTFIT FOR THIS SHOOT: The model MUST wear "${outfitItem.effect}". Include this exactly in the visualPrompt.`;
+                }
+            }
+            if (idol.equippedShoe) {
+                const shoeItem = gameManager.shopItems.find(i => i.id === idol.equippedShoe);
+                if (shoeItem && shoeItem.promptEffect) {
+                    outfitContext += `\nMANDATORY SHOES: The model MUST wear "${shoeItem.promptEffect}". IMPORTANT: Enforce FULL-BODY shot or wide-angle framing so the shoes are visible. Mention this directly in the visualPrompt.`;
+                }
+            }
+            if (idol.equippedAccessory) {
+                const accItem = gameManager.shopItems.find(i => i.id === idol.equippedAccessory);
+                if (accItem && (accItem.promptEffect || accItem.effect)) {
+                    const effectStr = accItem.promptEffect || accItem.effect;
+                    outfitContext += `\nMANDATORY ACCESSORY: The model MUST wear "${effectStr}". Mention this directly in the visualPrompt.`;
+                }
             }
         }
 
         const extraPrompts = visualModifiers.length > 0 ? ` Always include these visual elements: [${visualModifiers.join(' | ')}].` : '';
 
         const nat = idol.nationality && idol.nationality !== "Unknown" ? ` (` + idol.nationality + `)` : '';
+        const ageStr = idol.age ? ` ${idol.age}yo` : '';
+        const realStr = idol.isReal ? `REAL-LIFE CELEBRITY: The subject is a well-known real person. You MUST explicitly include "${idol.name}" and their likeness in the generated visualPrompt. Ensure the generated image accurately reflects the real-life facial features of ${idol.name}.` : `FICTIONAL MODEL.`;
+        
+        let measurementsContext = "";
+        if (idol.measurements) {
+            measurementsContext = `\nModel physical traits: Height ${idol.measurements.height || '?'}, Weight ${idol.measurements.weight || '?'}. Incorporate this body type naturally into the visual prompt.`;
+        }
+        
+        let preciseTraitsContext = "";
+        if (idol.physicalTraits) {
+            preciseTraitsContext = `\nMANDATORY FACIAL/PHYSICAL FEATURES: "${idol.physicalTraits}". You MUST include these exact physical details in the generated visualPrompt to ensure face/body consistency.`;
+        }
+
         const systemPrompt = `You are a visionary Art Director & Lead Cinematic Photographer. 
-        Your task is to craft a world-class, highly detailed English image generation prompt for a top fashion model named "${idol.name}"${nat}.
-        Her foundational concept/style: "${idol.concept}".
+        Your task is to craft a world-class, highly detailed English image generation prompt for a top fashion model named "${idol.name}"${ageStr}${nat}.
+        ${realStr}
+        Her foundational concept/style: "${idol.concept}".${measurementsContext}${preciseTraitsContext}
         User's creative vision for this shoot: "${userConcept}".${outfitContext}
         ${emotionalContext}
         
