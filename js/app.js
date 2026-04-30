@@ -523,7 +523,7 @@ const gameApp = {
         "stress" (từ 30 đến 70), 
         "corruption" (từ 25 đến 50), 
         "scandal" (từ 20 đến 45). 
-        Không markdown, chỉ trả về JSON hợp lệ.`;
+        TUYỆT ĐỐI CHỈ TRẢ VỀ JSON HỢP LỆ. KHÔNG BAO GỒM MARKDOWN HAY BÌNH LUẬN NÀO KHÁC. NHỚ KIỂM TRA DỰ KIẾN DẤU PHẨY.`;
 
         try {
             let jsonString = (provider === 'gemini') ? await service.generateContent(prompt) : await service.generateText(prompt);

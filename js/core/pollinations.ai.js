@@ -27,10 +27,19 @@ class PollinationsService {
         inputString = (inputString || '').trim();
         if (!inputString) {
             this.config.sk_key = null;
+            this.config.proxyUrl = null;
             this.config.isAnonymous = true;
             return 'free_mode';
         }
-        this.config.sk_key = inputString;
+        
+        if (inputString.startsWith('http://') || inputString.startsWith('https://')) {
+            this.config.proxyUrl = inputString;
+            this.config.sk_key = null; // or perhaps keep a dummy key if needed
+        } else {
+            this.config.sk_key = inputString;
+            this.config.proxyUrl = null;
+        }
+
         this.config.isAnonymous = false;
         return 'secured_mode';
     }
@@ -67,9 +76,13 @@ class PollinationsService {
         let resultBase64 = null;
 
         if (isSecured) {
-            const url = `${this.endpoints.secured.image}/${encodeURIComponent(prompt)}${params}`;
+            let baseUrl = this.config.proxyUrl ? this.config.proxyUrl : this.endpoints.secured.image;
+            baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
+            const url = `${baseUrl}/${encodeURIComponent(prompt)}${params}`;
             try {
-                const response = await fetch(url, { method: 'GET', headers: { 'Authorization': `Bearer ${this.config.sk_key}` } });
+                const headers = {};
+                if (this.config.sk_key) headers['Authorization'] = `Bearer ${this.config.sk_key}`;
+                const response = await fetch(url, { method: 'GET', headers });
                 if (response.status === 429) {
                     if (typeof document !== 'undefined') {
                         document.dispatchEvent(new CustomEvent('pollen-exhausted'));
@@ -116,9 +129,13 @@ class PollinationsService {
         for (const model of modelsToTry) {
             if (isSecured) {
                 try {
-                    const response = await fetch(this.endpoints.secured.text, {
+                    let textBaseUrl = this.config.proxyUrl ? this.config.proxyUrl : this.endpoints.secured.text;
+                    textBaseUrl = textBaseUrl.replace(/\/$/, ""); // Remove trailing slash
+                    const headers = { "Content-Type": "application/json" };
+                    if (this.config.sk_key) headers["Authorization"] = `Bearer ${this.config.sk_key}`;
+                    const response = await fetch(textBaseUrl, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.config.sk_key}` },
+                        headers: headers,
                         body: JSON.stringify({ model: model, messages: [{ role: "user", content: prompt }] })
                     });
                     if (response.status === 429) {
