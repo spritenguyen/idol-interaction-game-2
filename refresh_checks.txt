@@ -1,0 +1,173 @@
+731-        
+732-        await dbManager.saveIdolData(idol);
+733:        this.renderCards();
+734-        this.renderCondo();
+735-        if (gameManager.incrementAction) gameManager.incrementAction();
+--
+814-                dbManager.saveIdolData(idol);
+815-            });
+816:            this.renderCards();
+817-            this.renderCondo();
+818-            
+--
+848-        idol.affinity = Math.min(100, (idol.affinity || 30) + 5);
+849-        await dbManager.saveIdolData(idol);
+850:        this.renderCards();
+851-        this.renderCondo();
+852-        
+--
+986-            
+987-            if (gameManager.incrementAction) gameManager.incrementAction();
+988:            this.renderCards();
+989-            
+990-            const commentsHtml = data.viewerComments.map(c => `<div style="font-size:12px; color:white; background:rgba(255,255,255,0.15); padding:4px 8px; border-radius:10px; margin-bottom:4px; margin-left:-5px;">🗣 ${c}</div>`).join('');
+--
+1035-        
+1036-        await dbManager.saveIdolData(idol);
+1037:        this.renderCards();
+1038-        this.renderCondo();
+1039-        
+--
+1171-                // Update UI elements silently
+1172-                if (this.updateUI) this.updateUI();
+1173:                this.renderCards();
+1174-                this.renderCondo();
+1175-                
+--
+1288-
+1289-        await dbManager.saveIdolData(idol);
+1290:        this.renderCards();
+1291-        
+1292-        if (document.getElementById('idol-profile-modal').style.display === 'flex') {
+--
+1480-
+1481-        await dbManager.saveIdolData(idol);
+1482:        this.renderCards();
+1483-        this.renderShop(); // Update shop UI
+1484-        
+--
+1619-        gameManager.currentJobs.splice(jobIndex, 1);
+1620-        this.renderJobs();
+1621:        this.renderCards();
+1622-        
+1623-        if (gameManager.incrementAction) gameManager.incrementAction();
+--
+1819-        
+1820-        this.syncUI(); 
+1821:        this.renderCards();
+1822-        this.renderAchievements();
+1823-        this.renderStudioSelect();
+--
+1918-        
+1919-        if (newModel) {
+1920:            this.renderCards();
+1921-            this.renderStudioSelect();
+1922-            this.showToast(`Ký hợp đồng thành công với ${newModel.name}!`, "success");
+--
+1943-                    this.showToast(`Đã chấm dứt hợp đồng với: ${name}`, "info");
+1944-                    this.closeIdolProfile();
+1945:                    this.renderCards();
+1946-                    this.renderStudioSelect();
+1947-                }
+--
+1954-
+1955-    refreshUI(idolId) {
+1956:        this.renderCards();
+1957-        if (idolId && document.getElementById('idol-profile-modal').style.display === 'flex') {
+1958-            this.openIdolProfile(idolId);
+--
+1960-    },
+1961-
+1962:	renderCards() {
+1963-        const container = document.getElementById('idol-container');
+1964-        if (!container) return;
+--
+2099-
+2100-        await dbManager.saveIdolData(idol);
+2101:        this.renderCards();
+2102-        
+2103-        // update profile if open
+--
+2609-            if (updated) {
+2610-                await dbManager.saveIdolData(idol);
+2611:                this.renderCards();
+2612-            }
+2613-
+--
+2679-        
+2680-        await dbManager.saveIdolData(idol);
+2681:        this.renderCards();
+2682-    },
+2683-
+--
+2723-        
+2724-        await cardEngine.updateIdolTrend(id, provider, service);
+2725:        this.renderCards();
+2726-        
+2727-        if (document.getElementById('idol-profile-modal').style.display === 'flex') {
+--
+2742-        try {
+2743-            await cardEngine.inferIdolNationality(id, provider, service);
+2744:            this.renderCards();
+2745-            if (document.getElementById('idol-profile-modal').style.display === 'flex') {
+2746-                this.openIdolProfile(id);
+--
+2873-                            }
+2874-                            dbManager.saveIdolData(idol_updated);
+2875:                            this.renderCards();
+2876-                            if (gameManager.incrementAction) gameManager.incrementAction();
+2877-                        }
+--
+2956-                idol.fans = (idol.fans || 0) + 1000;
+2957-                await dbManager.saveIdolData(idol);
+2958:                this.renderCards();
+2959-            }
+2960-
+--
+2975-        const success = await cardEngine.updateAvatar(idolId, url);
+2976-        if (success) {
+2977:            this.renderCards();
+2978-            this.showToast("Đã cập nhật Avatar!", "success");
+2979-        }
+--
+3224-            await dbManager.saveIdolData(idol);
+3225-            if (typeof cardEngine !== 'undefined' && cardEngine.updateTotalFame) cardEngine.updateTotalFame();
+3226:            this.renderCards();
+3227-    
+3228-            this.showMuseGramResult(idol, photo.imageUrl, data);
+--
+3317-            idol.exp = (idol.exp || 0) + 1000;
+3318-            dbManager.saveIdolData(idol);
+3319:            this.renderCards();
+3320-            
+3321-            this.showDialog({
+--
+3329-            idol.stress = Math.min(100, (idol.stress || 0) + 30);
+3330-            dbManager.saveIdolData(idol);
+3331:            this.renderCards();
+3332-            
+3333-            this.showDialog({
+--
+3436-        idol.corruption = Math.min(100, Math.max(0, (idol.corruption || 0) + corruptionEffect));
+3437-        await dbManager.saveIdolData(idol);
+3438:        this.renderCards();
+3439-
+3440-        // Close current dialog
+--
+3599-        });
+3600-        
+3601:        this.renderCards();
+3602-    },
+3603-    
+--
+3627-        document.getElementById('dialog-modal').style.display = 'none';
+3628-        this.openIdolProfile(idolId);
+3629:        this.renderCards();
+3630-    },
+3631-
+--
+3689-        }
+3690-        dbManager.saveIdolData(idol);
+3691:        this.renderCards();
+3692-    }
+3693-};
