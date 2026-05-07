@@ -15,4 +15,4 @@ Game thẻ bài tích hợp AI
 - API Gemini, API pollinations.ai
 
 ## Deploy
-Chơi ngay: [https://spritenguyen.github.io/](https://spritenguyen.github.io/idol-interaction-game-2/)
+Chơi ngay: (https://spritenguyen.github.io/idol-interaction-game-2/)
