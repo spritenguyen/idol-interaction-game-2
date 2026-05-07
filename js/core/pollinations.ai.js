@@ -1,7 +1,7 @@
 class PollinationsService {
     constructor() {
         this.config = { sk_key: null, isAnonymous: true };
-        this.textModels = ['grok', 'gemini-fast'];
+        this.textModels = ['openai', 'gemini-fast'];
         this.currentTextModelIndex = 0;
         
         this.imageModels = ['flux', 'zimage', 'qwen-image', 'gptimage-large'];
