@@ -18,11 +18,106 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-title-group">
-                <div class="version-tag gradient-text" style="font-weight: bold;">v2.5 (Cine-Tech AI): RIVALRY SHOWBIZ</div>
+                <div class="version-tag gradient-text" style="font-weight: bold; font-family: var(--font-mono); letter-spacing: 1px;">v2.5 // RIVALRY SHOWBIZ</div>
                 <h1>MUSE<br>ARCHITECT</h1>
             </div>
+            <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('mobile-open')">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </div>
+        
+        <nav class="main-nav">
+            <div class="nav-section-title">ĐIỀU HÀNH</div>
+            <button id="nav-btn-map" class="nav-btn active" onclick="gameApp.switchView('map')" title="Bản đồ thành phố">
+                <span class="nav-icon">🗺️</span> <span class="nav-text">BẢN ĐỒ TP</span>
+            </button>
+            <button id="nav-btn-management" class="nav-btn" onclick="gameApp.switchView('management')" title="Quản lý đội hình Model của bạn">
+                <span class="nav-icon">👥</span> <span class="nav-text">ĐỘI HÌNH</span>
+            </button>
+            <button id="nav-btn-jobs" class="nav-btn" onclick="gameApp.switchView('jobs')" title="Nhận hợp đồng kiếm tiền">
+                <span class="nav-icon">💼</span> <span class="nav-text">CÔNG VIỆC</span>
+            </button>
             
-            <div class="global-resources-mobile">
+            <div class="nav-section-title mt-10">CƠ SỞ & NÂNG CẤP</div>
+            <button id="nav-btn-shop" class="nav-btn" onclick="gameApp.switchView('shop')" title="Cửa hàng vật phẩm">
+                <span class="nav-icon">🛍️</span> <span class="nav-text">CỬA HÀNG</span>
+            </button>
+            <button id="nav-btn-inventory" class="nav-btn" onclick="gameApp.openInventory()" title="Kho đồ của bạn">
+                <span class="nav-icon">🎒</span> <span class="nav-text">TÚI ĐỒ</span>
+            </button>
+            <button id="nav-btn-scout" class="nav-btn highlighted-nav" onclick="gameApp.switchView('scout')" title="Tìm kiếm Model tiềm năng">
+                <span class="nav-icon">📡</span> <span class="nav-text">SCOUT (TÌM MỚI)</span>
+            </button>
+            <button id="nav-btn-spa" class="nav-btn" onclick="gameApp.switchView('spa')" title="Trung tâm hồi phục sắc đẹp">
+                <span class="nav-icon">💆‍♀️</span> <span class="nav-text">SPA BEAUTY</span>
+            </button>
+            
+            <div class="nav-section-title mt-10">MỞ RỘNG KINH DOANH</div>
+            <button id="nav-btn-cinema" class="nav-btn" onclick="gameApp.switchView('cinema')" title="Sản xuất dự án Điện Ảnh">
+                <span class="nav-icon">🎬</span> <span class="nav-text">ĐIỆN ẢNH</span>
+            </button>
+            <button id="nav-btn-fashion" class="nav-btn" onclick="gameApp.switchView('fashion')" title="Tham gia Fashion Week">
+                <span class="nav-icon">✨</span> <span class="nav-text">FASHION WEEK</span>
+            </button>
+            <button id="nav-btn-pr" class="nav-btn" onclick="gameApp.switchView('pr')" title="Trung tâm Xử lý Khủng hoảng & PR">
+                <span class="nav-icon">📰</span> <span class="nav-text">TRUYỀN THÔNG (PR)</span>
+            </button>
+            <button id="nav-btn-sponsor" class="nav-btn" onclick="gameApp.switchView('sponsor')" title="Tìm kiếm Nhà tài trợ & Đầu tư">
+                <span class="nav-icon">🤝</span> <span class="nav-text">TÀI TRỢ</span>
+            </button>
+            <button id="nav-btn-techtree" class="nav-btn" onclick="gameApp.switchView('techtree')" title="Nâng cấp công nghệ & Passive Buff">
+                <span class="nav-icon">🧬</span> <span class="nav-text">TECH TREE</span>
+            </button>
+            
+            <div class="nav-section-title mt-10">CAO CẤP & ĐỐI KHÁNG</div>
+            <button id="nav-btn-brand" class="nav-btn" onclick="gameApp.switchView('brand')" title="Đấu trường thương hiệu">
+                <span class="nav-icon">💎</span> <span class="nav-text">THƯƠNG HIỆU</span>
+            </button>
+            <button id="nav-btn-studio" class="nav-btn" onclick="gameApp.switchView('studio')" title="The Studio Lab">
+                <span class="nav-icon">📸</span> <span class="nav-text">THE STUDIO</span>
+            </button>
+            <button id="nav-btn-condo" class="nav-btn" onclick="gameApp.switchView('condo')" title="Khu căn hộ">
+                <span class="nav-icon">🏙️</span> <span class="nav-text">KHU CĂN HỘ</span>
+            </button>
+            <button id="nav-btn-underground" class="nav-btn text-error" onclick="gameApp.switchView('underground')" title="Thế giới ngầm" style="color: var(--error);">
+                <span class="nav-icon" style="color: var(--error);">♠️</span> <span class="nav-text">UNDERGROUND</span>
+            </button>
+            
+            <div class="nav-section-title mt-10">MỞ RỘNG</div>
+            <button class="nav-btn" onclick="gameApp.openGallery()" title="Mở kho lưu trữ hình ảnh">
+                <span class="nav-icon">🖼️</span> <span class="nav-text">GALLERY</span>
+            </button>
+            <button id="nav-btn-achievements" class="nav-btn" onclick="gameApp.switchView('achievements')" title="Xem các thành tựu">
+                <span class="nav-icon">🏆</span> <span class="nav-text">THÀNH TỰU</span>
+            </button>
+            <button class="nav-btn" onclick="gameApp.openGuide()" title="Hướng dẫn chơi">
+                <span class="nav-icon">📖</span> <span class="nav-text">HƯỚNG DẪN</span>
+            </button>
+            <!-- Thêm spacer để mobile có thể scroll hết -->
+            <div style="height: 80px;" class="mobile-only-spacer"></div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="system-status-indicator">
+                <div class="api-widget-minimal" title="Trạng thái API">
+                    <span class="status-dot"></span>
+                    <span class="api-state" id="api-state-text">Idle</span>
+                </div>
+            </div>
+            <button class="btn-icon settings-btn" onclick="gameApp.toggleSettings(true)" title="Cấu hình hệ thống (Settings)">⚙️ CẤU HÌNH</button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper">
+        <header class="top-header">
+            <button class="mobile-menu-toggle-btn" onclick="document.querySelector('.sidebar').classList.add('mobile-open')">☰</button>
+            <div class="header-breadcrumbs" id="current-view-title">
+                BẢN ĐỒ THÀNH PHỐ
+            </div>
+            <div class="global-resources">
                 <div class="resource-pill" title="Ngân sách (Dùng để Scout và chụp ảnh)">
                     <span class="icon">💰</span>
                     <span id="ui-money" class="value font-mono style-bold">5000</span>
@@ -32,56 +127,9 @@
                     <span id="ui-diamonds" class="value font-mono style-bold">50</span>
                 </div>
             </div>
-        </div>
+        </header>
         
-        <nav class="main-nav">
-            <button id="nav-btn-map" class="nav-btn active" onclick="gameApp.switchView('map')" title="Bản đồ thành phố">
-                <span>🗺️</span> BẢN ĐỒ TP
-            </button>
-            <button id="nav-btn-management" class="nav-btn" onclick="gameApp.switchView('management')" title="Quản lý đội hình Model của bạn">
-                <span>👥</span> ĐỘI HÌNH
-            </button>
-            <button id="nav-btn-jobs" class="nav-btn" onclick="gameApp.switchView('jobs')" title="Nhận hợp đồng kiếm tiền">
-                <span>💼</span> CÔNG VIỆC
-            </button>
-            <button id="nav-btn-shop" class="nav-btn" onclick="gameApp.switchView('shop')" title="Cửa hàng vật phẩm">
-                <span>🛍️</span> CỬA HÀNG
-            </button>
-            <button id="nav-btn-inventory" class="nav-btn" onclick="gameApp.openInventory()" title="Kho đồ của bạn">
-                <span>🎒</span> TÚI ĐỒ
-            </button>
-            <button id="nav-btn-scout" class="nav-btn" onclick="gameApp.switchView('scout')" title="Tìm kiếm Model tiềm năng">
-                <span>📡</span> SCOUT
-            </button>
-            <button id="nav-btn-spa" class="nav-btn" onclick="gameApp.switchView('spa')" title="Trung tâm hồi phục sắc đẹp">
-                <span>💆‍♀️</span> SPA
-            </button>
-            <button id="nav-btn-brand" class="nav-btn" onclick="gameApp.switchView('brand')" title="Đấu trường thương hiệu">
-                <span>💎</span> THƯƠNG HIỆU
-            </button>
-            <button id="nav-btn-studio" class="nav-btn" onclick="gameApp.switchView('studio')" title="The Studio Lab">
-                <span>📸</span> THE STUDIO
-            </button>
-            <button id="nav-btn-condo" class="nav-btn" onclick="gameApp.switchView('condo')" title="Khu căn hộ">
-                <span>🏙️</span> KHU CĂN HỘ
-            </button>
-            <button id="nav-btn-underground" class="nav-btn" onclick="gameApp.switchView('underground')" title="Thế giới ngầm" style="color: #ef4444;">
-                <span style="color: #ef4444;">♠️</span> UNDERGROUND
-            </button>
-            <button id="nav-btn-achievements" class="nav-btn" onclick="gameApp.switchView('achievements')" title="Xem các thành tựu đã đạt được để nhận thưởng">
-                <span>🏆</span> THÀNH TỰU
-            </button>
-        </nav>
-
-        <div class="sidebar-footer">
-            <button class="nav-btn-small" onclick="gameApp.openGallery()" title="Mở kho lưu trữ hình ảnh (Gallery)">🖼️ Gallery</button>
-            <button class="nav-btn-small" onclick="gameApp.toggleSettings(true)" title="Cấu hình hệ thống (Settings)">⚙️ Setting</button>
-            <button class="nav-btn-small" onclick="gameApp.openGuide()" title="Hướng dẫn chơi">📖 Hướng dẫn</button>
-        </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="main-content">
+        <main class="main-content">
         <!-- MAP VIEW -->
         <section id="map-view" class="view-section">
             <div class="view-header">
@@ -458,6 +506,66 @@
             </div>
         </section>
 
+        <!-- CINEMA VIEW -->
+        <section id="cinema-view" class="view-section hidden">
+            <div class="view-header">
+                <div>
+                    <h2>CINE-TECH STUDIOS</h2>
+                    <p class="view-desc">Đầu tư và tự sản xuất các siêu phẩm điện ảnh kinh điển. Chọn Model thủ vai chính để tăng Fame đột biến.</p>
+                </div>
+            </div>
+            <div id="cinema-grid" class="management-grid"></div>
+        </section>
+
+        <!-- FASHION WEEK VIEW -->
+        <section id="fashion-view" class="view-section hidden">
+            <div class="view-header">
+                <div>
+                    <h2>GLOBAL FASHION WEEK</h2>
+                    <p class="view-desc">Sự kiện Runway Đỉnh Cao. Chọn tối đa 3 Model trình diễn theo Style nhất định để đánh bại đối thủ.</p>
+                </div>
+            </div>
+            <div id="fashion-event-container" style="background:var(--bg-surface); padding:20px; border-radius:var(--radius-md); border:1px solid var(--border-color); text-align:center;">
+                <h3 style="color:var(--primary); margin-top:0;">FASHION SHOW RUNWAY</h3>
+                <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">Sự kiện đang đóng. Tốn 5000 💰 để tổ chức buổi diễn riêng.</p>
+                <button class="btn-action btn-primary" onclick="gameApp.startFashionWeek()">TỔ CHỨC SHOW (5000 💰)</button>
+            </div>
+            <div id="fashion-active-show" class="hidden mt-20"></div>
+        </section>
+
+        <!-- PR CENTER VIEW -->
+        <section id="pr-view" class="view-section hidden">
+            <div class="view-header">
+                <div>
+                    <h2>TRUNG TÂM PR & XỬ LÝ KHỦNG HOẢNG</h2>
+                    <p class="view-desc">Giám sát rủi ro Scandal của Model. Mua bài PR để tẩy trắng hoặc tăng độ nhận diện.</p>
+                </div>
+            </div>
+            <div id="pr-grid" class="management-grid"></div>
+        </section>
+
+        <!-- SPONSOR VIEW -->
+        <section id="sponsor-view" class="view-section hidden">
+            <div class="view-header">
+                <div>
+                    <h2>NHÀ TÀI TRỢ & ĐẦU TƯ</h2>
+                    <p class="view-desc">Ký kết quỹ đầu tư. Nhận thu nhập thụ động 💰 mỗi lần bạn thực hiện các hành động (như nhận hợp đồng/scout).</p>
+                </div>
+            </div>
+            <div id="sponsor-grid" class="management-grid"></div>
+        </section>
+
+        <!-- TECH TREE VIEW -->
+        <section id="techtree-view" class="view-section hidden">
+            <div class="view-header">
+                <div>
+                    <h2>TECH TREE (NGHIÊN CỨU)</h2>
+                    <p class="view-desc">Sử dụng Kim Cương (💎) để nâng cấp bộ kỹ năng thụ động cho Công Ty của bạn.</p>
+                </div>
+            </div>
+            <div id="techtree-grid" class="management-grid"></div>
+        </section>
+
         <!-- ACHIEVEMENTS VIEW -->
         <section id="achievements-view" class="view-section hidden">
             <div class="view-header">
@@ -469,19 +577,6 @@
             <div id="achievements-container" class="management-grid"></div>
         </section>
     </main>
-</div>
-
-<!-- SYSTEM STATUS BAR -->
-<div class="system-status-bar" id="global-status-bar">
-    <div class="status-left">
-        <span class="status-credits">Cine-Tech Idol Maker Engine</span>
-    </div>
-    <div class="status-right">
-        <div id="api-minimal-status" class="api-widget-minimal" title="Trạng thái API">
-            <span class="api-label">API :</span>
-            <span class="api-state" id="api-state-text">Idle</span>
-        </div>
-    </div>
 </div>
 
 <!-- SETTINGS MODAL -->
