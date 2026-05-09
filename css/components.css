@@ -1230,3 +1230,60 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 .hidden { display: none !important; }
+
+/* ========================================================
+   Adaptive Performance & Feature Gating
+   ======================================================== */
+body.perf-mode-low * {
+    animation-duration: 0.1s !important;
+    transition-duration: 0.1s !important;
+    box-shadow: none !important;
+}
+
+body.perf-mode-low .city-building {
+    background-size: cover !important;
+    background-attachment: scroll !important;
+}
+
+body.perf-mode-low .map-zone {
+    animation: none !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Mobile specific overrides */
+body.mobile-device .modal-content.settings-content {
+    width: 95% !important;
+}
+
+body.mobile-device .management-grid, 
+body.mobile-device .jobs-grid, 
+body.mobile-device .shop-grid,
+body.mobile-device .condo-grid {
+    grid-template-columns: 1fr !important;
+}
+
+/* On mobile layout: sidebar icons only */
+@media (max-width: 768px) {
+    body.mobile-device .sidebar {
+        width: 70px !important;
+        padding: 10px 5px !important;
+        align-items: center;
+    }
+
+    body.mobile-device .sidebar-title-group h1,
+    body.mobile-device .sidebar-title-group .version-tag,
+    body.mobile-device .nav-btn span:not(:first-child),
+    body.mobile-device .sidebar-footer {
+        display: none !important;
+    }
+
+    body.mobile-device .main-nav {
+        gap: 5px;
+    }
+
+    body.mobile-device .nav-btn {
+        justify-content: center;
+        padding: 10px !important;
+        font-size: 24px !important;
+    }
+}

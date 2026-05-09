@@ -212,7 +212,7 @@ Cấu trúc JSON chuẩn:
         const nat = tempData.nationality && tempData.nationality !== "Unknown" ? tempData.nationality + ' ' : '';
         const ageStr = (tempData.age ? tempData.age + 'yo ' : '');
         const traitStr = tempData.physicalTraits ? ` Facial/Body traits: ${tempData.physicalTraits}.` : '';
-        const anatomyOpt = "perfect human anatomy, symmetrical beautiful face, flawless realistic natural eyes, perfect detailed hands, masterpiece, photorealistic, 8k. NO deformed, NO bad anatomy, NO bad hands, NO missing fingers";
+        const anatomyOpt = "perfect human anatomy, symmetrical beautiful face, flawless realistic natural eyes, perfect detailed hands and fingers, perfect proportional legs, exactly 5 fingers per hand, masterpiece, photorealistic, 8k. NO deformed, NO bad anatomy, NO bad hands, NO missing fingers, NO extra digits, NO asymmetrical face, NO cross-eyed, NO unnatural body, NO mutated hands";
         const avatarPrompt = `Professional square headshot portrait of a ${ageStr}${nat}model named ${tempData.name}, ${tempData.concept}${traitStr}, high-fashion editorial, cinematic lighting, shot on Hasselblad 85mm, extremely detailed, clean background, ${anatomyOpt}.`;
 
         pollinationsService.generateImage(avatarPrompt).then(async (avatarUrl) => {

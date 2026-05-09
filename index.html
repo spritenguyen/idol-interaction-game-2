@@ -337,12 +337,21 @@
 
         <!-- MANAGEMENT VIEW -->
         <section id="management-view" class="view-section hidden">
-            <div class="view-header">
-                <div>
+            <div class="view-header" style="flex-wrap: wrap; gap: 15px;">
+                <div style="flex-grow: 1;">
                     <h2>OFFICIAL ROSTER</h2>
                     <p class="view-desc">Danh sách Model thuộc quyền quản lý của Agency.</p>
                 </div>
-                <div id="model-count-badge" class="badge font-mono">0 MODELS</div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="roster-sort" onchange="gameApp.renderCards()" style="background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: var(--radius-md); font-family: 'Inter', sans-serif;">
+                        <option value="fame_desc">Sắp xếp: Fame cao nhất</option>
+                        <option value="fame_asc">Sắp xếp: Fame thấp nhất</option>
+                        <option value="stress_desc">Sắp xếp: Nghỉ ngơi nhiều nhất (Ít mệt)</option>
+                        <option value="stress_asc">Sắp xếp: Áp lực cao nhất</option>
+                        <option value="name_asc">Sắp xếp: Tên (A-Z)</option>
+                    </select>
+                    <div id="model-count-badge" class="badge font-mono" style="margin: 0;">0 MODELS</div>
+                </div>
             </div>
             <div id="idol-container" class="management-grid"></div>
         </section>
@@ -567,10 +576,19 @@
 <div id="guide-modal" class="modal">
     <div class="modal-content settings-content" style="max-height: 80vh; overflow-y: auto;">
         <div class="modal-header">
-            <h2>📖 HƯỚNG DẪN CHƠI CƠ BẢN</h2>
+            <h2>📖 HƯỚNG DẪN CHƠI</h2>
             <button class="btn-icon" onclick="document.getElementById('guide-modal').style.display='none'">✕</button>
         </div>
         <div class="guide-body mt-10 text-main" style="line-height: 1.6; font-size: 14px;">
+            <div style="background: var(--bg-elevated); border-left: 4px solid var(--gold); padding: 12px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: var(--gold);">⚡ CẬP NHẬT MỚI: v2.5 (Cine-Tech AI & Hiệu Năng Đa Nền Tảng)</h3>
+                <ul style="padding-left: 20px; margin-bottom: 0;">
+                    <li><strong>Adaptive Performance:</strong> Tự động tắt/giảm tải các hiệu ứng hạt, glow effect và animation phức tạp nếu phát hiện thiết bị yếu hoặc mobile, tiết kiệm pin và tránh giật lag.</li>
+                    <li><strong>Giao Diện Xác Nhận (Dialog):</strong> Mọi hành động quan trọng (Scout, Chi tiền, Sa thải, Đóng băng) đều yêu cầu xác nhận in-game để tránh bấm nhầm.</li>
+                    <li><strong>Cải tiến Giao Diện Trò Chuyện (Chat):</strong> Tích hợp nút xoá lịch sử chat, cuộn mượt hơn, tự động khôi phục nội dung cũ theo từng dòng.</li>
+                </ul>
+            </div>
+
             <h3 style="color: var(--gold); margin-top: 15px;">1. Mục Tiêu Trò Chơi</h3>
             <p>Bạn là một giám đốc công ty đào tạo người mẫu (Agency HQ). Nhiệm vụ của bạn là chiêu mộ (Scout), huấn luyện, và đưa các Model trẻ trở thành những ngôi sao hạng A (Fame cao, Visual hoàn hảo).</p>
 
@@ -658,7 +676,10 @@
                     <div id="chat-mood" style="font-size: 11px; color: var(--gold); font-style: italic;"></div>
                 </div>
             </div>
-            <button class="btn-icon" onclick="gameApp.closeChat()">✕</button>
+            <div>
+                <button class="btn-icon" style="font-size: 12px; margin-right: 10px; color: var(--error);" onclick="gameApp.clearChat()" title="Xoá lịch sử">🗑️</button>
+                <button class="btn-icon" onclick="gameApp.closeChat()">✕</button>
+            </div>
         </div>
         <div id="chat-messages" class="chat-messages">
             <!-- Messages go here -->

@@ -364,15 +364,38 @@ const gameApp = {
             title: "XÁC NHẬN GIAN LẬP / CÔNG VIỆC NGẦM",
             message: `<strong>Công việc:</strong> ${jobName}<br><strong>Model:</strong> ${idol.name}<br><br><strong>Hậu quả:</strong><br>- Căng thẳng: <span style="color:var(--error);">+${stressCost}</span><br>- Tha hóa: <span style="color:var(--error);">+${corrGain}</span><br>${affinityCost > 0 ? `- Hảo cảm: <span style="color:var(--error);">-${affinityCost}</span><br>` : ''}- Scandal Risk: <span style="color:var(--error);">+${scandalCost}%</span><br><br><strong>TIỀN THƯỞNG:</strong> <strong style="color:var(--success);">+${moneyReward} 💰</strong><br><br>Bạn có chắc chắn muốn đẩy cô ấy vào vũng lầy này?`,
             type: "confirm",
-            onConfirm: () => {
-                gameManager.updateMoney(moneyReward);
+            onConfirm: async () => {
+                this.startTask('ai_dark_job', `Đang thực hiện giao dịch ngầm (${jobName})...`);
+                const prompt = `Cô nàng người mẫu "${idol.name}" (Fame: ${idol.stats.fame}, Tha hóa: ${corr}, Stress: ${stress}) vừa bị ép tham gia công việc ngầm: "${jobName}".
+Yêu cầu:
+Viết 1 đoạn văn ngắn (3-4 câu) bằng tiếng Việt mô tả chân thực, u tối về buổi làm việc này trong góc khuất ngành giải trí. Tả tâm lý cô ấy, ánh đèn, những ánh mắt nguy hiểm hoặc bối cảnh xung quanh. Liệu cô ấy chịu đựng hay có sự cố nhỏ?
+Dựa vào đó, đưa ra hệ số thưởng tiền "rewardMod" (0.8 đến 1.5) và hệ số rủi ro scandal "scandalMod" (0.5 đến 2.0).
+Trả về CHỈ một JSON hợp lệ: {"story": "...", "rewardMod": 1.1, "scandalMod": 1.2}`;
+
+                let resultJson = { story: "Một công việc trong buổi tối đen tối, mọi thứ diễn ra theo kế hoạch.", rewardMod: 1.0, scandalMod: 1.0 };
+                try {
+                    const resultText = await apiManager.generateText(prompt);
+                    const cleanedStr = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const parsed = JSON.parse(cleanedStr);
+                    if (parsed.story && parsed.rewardMod) {
+                        resultJson = parsed;
+                    }
+                } catch (e) {
+                    console.warn("AI Dark Job Gen failed", e);
+                }
+                this.endTask('ai_dark_job');
+
+                const finalReward = Math.floor(moneyReward * (resultJson.rewardMod || 1));
+                const finalScandalCost = Math.floor(scandalCost * (resultJson.scandalMod || 1));
+
+                gameManager.updateMoney(finalReward);
                 idol.stress = stress + stressCost;
                 if (idol.stress > 100) idol.stress = 100;
                 
                 idol.corruption = corr + corrGain;
                 if (idol.corruption > 100) idol.corruption = 100;
                 
-                idol.scandalRisk = (idol.scandalRisk || 0) + scandalCost;
+                idol.scandalRisk = (idol.scandalRisk || 0) + finalScandalCost;
                 if (idol.scandalRisk >= 100) {
                     idol.scandalRisk = 100;
                     this.showToast(`CẢNH BÁO: ${idol.name} ĐÃ BỊ PHONG SÁT DO LỘ SCANDAL NGHIÊM TRỌNG!`, "error");
@@ -382,9 +405,10 @@ const gameApp = {
                 idol.affinity = affinity - affinityCost;
                 if (idol.affinity < 0) idol.affinity = 0;
 
+                let darkMuseStr = "";
                 if (idol.corruption >= 100 && (!idol.concept || !idol.concept.includes("Dark Muse"))) {
                     idol.concept = (idol.concept || '') + " | Dark Muse";
-                    this.showToast(`CẢNH BÁO: ${idol.name} ĐÃ BỊ THA HÓA HOÀN TOÀN TRỞ THÀNH DARK MUSE!`, "error");
+                    darkMuseStr = `<br><span style="color:var(--error); font-weight:bold;">⚠️ ${idol.name} CẢNH BÁO ĐÃ BIẾN THÀNH DARK MUSE!</span>`;
                 }
 
                 dbManager.saveIdolData(idol);
@@ -392,7 +416,20 @@ const gameApp = {
                     this.renderUndergroundRoster();
                     this.refreshUI(idol.id); // Sync all views
                 }, 100);
-                this.showToast(`Hoàn thành ${jobName}! Nhận ${moneyReward}💰`, "success");
+
+                this.showDialog({
+                    title: `Kết Quả: ${jobName}`,
+                    message: `
+                        <div style="font-size: 14px; color: #f87171; margin-bottom: 15px; border-left: 3px solid #dc2626; padding-left: 10px; background: rgba(0,0,0,0.5); padding: 10px;">
+                            ${resultJson.story}
+                        </div>
+                        <strong>Thù lao nhận được:</strong> <span style="color:var(--success);">+${finalReward} 💰</span> <em>(Hệ số x${resultJson.rewardMod || 1})</em><br>
+                        <strong>Rủi ro Scandal tăng:</strong> <span style="color:var(--error);">+${finalScandalCost}%</span> <em>(Hệ số x${resultJson.scandalMod || 1})</em><br>
+                        <strong>Độ tha hóa:</strong> <span style="color:var(--error);">+${corrGain} | Căng thẳng: +${stressCost}</span>
+                        ${darkMuseStr}
+                    `,
+                    type: "info"
+                });
             }
         });
     },
@@ -1723,9 +1760,64 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             idol.level = (idol.level || 1) + 1;
             idol.exp -= 100;
             levelUpStr = `🎉 Model đã lên cấp ${idol.level}!`;
+            this.triggerLevelUpEffect(idol.name, idol.level);
             if (typeof gameManager !== 'undefined') gameManager.checkAchievement('LEVEL_UP', idol);
         }
         return levelUpStr;
+    },
+
+    triggerLevelUpEffect(idolName, newLevel) {
+        const glow = document.createElement('div');
+        glow.style.position = 'fixed';
+        glow.style.top = '0';
+        glow.style.left = '0';
+        glow.style.width = '100vw';
+        glow.style.height = '100vh';
+        glow.style.pointerEvents = 'none';
+        glow.style.zIndex = '99999';
+        glow.style.background = 'radial-gradient(circle at center, rgba(250,204,21,0.4) 0%, transparent 70%)';
+        glow.style.animation = 'glowPulse 1.5s ease-out forwards';
+        
+        const text = document.createElement('div');
+        text.innerHTML = `⭐ ${idolName} LEVEL UP! (${newLevel}) ⭐`;
+        text.style.position = 'absolute';
+        text.style.top = '50%';
+        text.style.left = '50%';
+        text.style.transform = 'translate(-50%, -50%)';
+        text.style.color = 'var(--gold, #facc15)';
+        text.style.fontSize = 'min(40px, 8vw)';
+        text.style.fontFamily = "'JetBrains Mono', monospace";
+        text.style.whiteSpace = "nowrap";
+        text.style.fontWeight = '900';
+        text.style.textShadow = '0 0 20px rgba(250,204,21,1), 0 0 40px rgba(250,204,21,0.5), 0 0 60px rgba(250,204,21,0.3)';
+        text.style.animation = 'textPopUp 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+        
+        glow.appendChild(text);
+        document.body.appendChild(glow);
+
+        if (!document.getElementById('level-up-style')) {
+            const style = document.createElement('style');
+            style.id = 'level-up-style';
+            style.innerHTML = `
+                @keyframes glowPulse {
+                    0% { opacity: 0; background: radial-gradient(circle at center, rgba(250,204,21,0.8) 0%, transparent 50%); }
+                    30% { opacity: 1; background: radial-gradient(circle at center, rgba(250,204,21,0.4) 0%, transparent 80%); }
+                    100% { opacity: 0; background: radial-gradient(circle at center, rgba(250,204,21,0) 0%, transparent 100%); }
+                }
+                @keyframes textPopUp {
+                    0% { opacity: 0; transform: translate(-50%, -100%) scale(0.5); }
+                    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+                    40% { transform: translate(-50%, -50%) scale(1); }
+                    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    100% { opacity: 0; transform: translate(-50%, -0%) scale(0.8); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        setTimeout(() => {
+            if (glow.parentNode) glow.parentNode.removeChild(glow);
+        }, 2600);
     },
 
     openUseItem(itemId) {
@@ -2006,15 +2098,46 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         const idol = cardEngine.getIdol(idolId);
         if(!idol) return;
 
+        this.startTask('ai_job_exec', `Đang theo chân ${idol.name} đi làm (${job.name})...`);
+        const prompt = `Cô nàng người mẫu "${idol.name}" (Fame: ${idol.stats.fame}, Stress: ${idol.stress}) vừa tham gia công việc: "${job.name}".
+Yêu cầu:
+Viết 1 kịch bản ngắn (3-4 câu) bằng tiếng Việt mô tả chân thực buổi làm việc này trong ngành giải trí. Tả phong thái, đạo cụ hoặc trang phục cô ấy mặc, và phản ứng của đạo diễn/khách hàng. Liệu có xảy ra sự cố hay thành công rực rỡ?
+Dựa vào câu chuyện, đưa ra hệ số thưởng tiền (rewardMod) từ 0.5 (tệ) đến 2.0 (viral), hệ số mệt mỏi (stressMod) từ 0.5 (nhàn) đến 1.5 (vắt kiệt sức).
+Trả về CHỈ một JSON hợp lệ với cấu trúc sau, tuyệt đối không có markdown block hay text dư thừa ngoài JSON:
+{
+  "story": "...",
+  "rewardMod": 1.2,
+  "stressMod": 1.0,
+  "status": "success"
+}`;
+
+        let resultJson = { story: "Công việc diễn ra suôn sẻ và bình thường.", rewardMod: 1.0, stressMod: 1.0, status: "success" };
+        try {
+            const resultText = await apiManager.generateText(prompt);
+            const cleanedStr = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(cleanedStr);
+            if (parsed.story && parsed.rewardMod) {
+                resultJson = parsed;
+            }
+        } catch (e) {
+            console.warn("AI Job Gen failed, using defaults", e);
+        }
+        this.endTask('ai_job_exec');
+
+        const finalReward = Math.floor(job.reward * (resultJson.rewardMod || 1));
+        const finalStress = Math.floor(job.stress * (resultJson.stressMod || 1));
+        const finalExp = job.exp;
+
         // Update stats
-        idol.stress = (idol.stress || 0) + job.stress;
-        idol.exp = (idol.exp || 0) + job.exp;
+        idol.stress = (idol.stress || 0) + finalStress;
+        idol.exp = (idol.exp || 0) + finalExp;
         
         let levelUpStr = "";
         if(idol.exp >= 100) {
             idol.level = (idol.level || 1) + 1;
             idol.exp -= 100;
             levelUpStr = `🎉 Model đã lên cấp ${idol.level}!`;
+            this.triggerLevelUpEffect(idol.name, idol.level);
         }
         
         let weightDropStr = "";
@@ -2026,12 +2149,12 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                 let newVal = Math.max(10, num - 1);
                 newVal = Math.round(newVal * 10) / 10;
                 idol.measurements.weight = currentStr.replace(match[0], newVal);
-                weightDropStr = " (Cân nặng giảm nhẹ)";
+                weightDropStr = "<br><span style='color:var(--gold);'>* Cân nặng giảm do làm việc tần suất cao!</span>";
             }
         }
         
         await dbManager.saveIdolData(idol);
-        gameManager.updateMoney(job.reward);
+        gameManager.updateMoney(finalReward);
         
         // Remove job from board
         gameManager.currentJobs.splice(jobIndex, 1);
@@ -2040,7 +2163,25 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         
         if (gameManager.incrementAction) gameManager.incrementAction();
 
-        this.showToast(`Hoàn thành hợp đồng! Nhận ${job.reward}💰. ${levelUpStr}${weightDropStr}`, "success");
+        let statusIcon = "✅";
+        if (resultJson.status === "issue" || resultJson.rewardMod < 1) statusIcon = "⚠️";
+        if (resultJson.status === "viral" || resultJson.rewardMod >= 1.5) statusIcon = "🔥";
+
+        this.showDialog({
+            title: `Kết Quả Hợp Đồng: ${job.name}`,
+            message: `
+                <div style="font-size: 14px; color: var(--text-main); margin-bottom: 15px; border-left: 3px solid var(--primary); padding-left: 10px; background: rgba(0,0,0,0.2); padding: 10px;">
+                    ${resultJson.story}
+                </div>
+                <strong>Đánh giá:</strong> ${statusIcon} ${resultJson.status.toUpperCase()}<br>
+                <strong>Thù lao nhận được:</strong> <span style="color:var(--success);">+${finalReward} 💰</span> <em>(Hệ số x${resultJson.rewardMod || 1})</em><br>
+                <strong>Mức độ stress:</strong> <span style="color:var(--error);">+${finalStress}%</span><br>
+                <strong>Kinh nghiệm:</strong> <span style="color:var(--primary);">+${finalExp} EXP</span><br>
+                ${levelUpStr ? `<div style="color:var(--gold); margin-top:5px; font-weight:bold;">${levelUpStr}</div>` : ''}
+                ${weightDropStr}
+            `,
+            type: "info"
+        });
     },
     
     // Inventory Items handler to use on idols
@@ -2278,6 +2419,23 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
     },
 
     async init() {
+        // Adaptive Performance/Feature Gating
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isLowEnd = typeof navigator.deviceMemory !== 'undefined' ? navigator.deviceMemory <= 4 : (navigator.hardwareConcurrency <= 4);
+        
+        if (isMobile) {
+            document.body.classList.add('mobile-device');
+        } else {
+            document.body.classList.add('desktop-device');
+        }
+        
+        if (isLowEnd) {
+            document.body.classList.add('perf-mode-low');
+            this.showToast("Đã bật chế độ Tối ưu hiệu năng cho thiết bị hiện tại.", "info");
+        } else {
+            document.body.classList.add('perf-mode-high');
+        }
+
         document.addEventListener('pollen-exhausted', () => {
             const now = new Date();
             const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0);
@@ -2531,8 +2689,31 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             return;
         }
 
+        let rosterArray = Array.from(cardEngine.roster.values());
+        
         let htmlBuffer = '';
-        cardEngine.roster.forEach(idol => {
+        
+        // Sorting logic based on select value
+        const sortSelect = document.getElementById('roster-sort');
+        if (sortSelect) {
+            const sortMode = sortSelect.value;
+            rosterArray.sort((a, b) => {
+                if (sortMode === 'fame_desc') {
+                    return (b.stats?.fame || 0) - (a.stats?.fame || 0);
+                } else if (sortMode === 'fame_asc') {
+                    return (a.stats?.fame || 0) - (b.stats?.fame || 0);
+                } else if (sortMode === 'stress_desc') {
+                    return (a.stress || 0) - (b.stress || 0); // Ít stress (nghỉ ngơi nhiều) lên đầu
+                } else if (sortMode === 'stress_asc') {
+                    return (b.stress || 0) - (a.stress || 0); // Áp lực cao lên đầu
+                } else if (sortMode === 'name_asc') {
+                    return a.name.localeCompare(b.name);
+                }
+                return 0;
+            });
+        }
+
+        rosterArray.forEach(idol => {
             if (!idol) return; 
 
             // Sync legacy risk if needed during rendering to be absolutely safe
@@ -2567,37 +2748,49 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
                          <img src="${safeAvatar}" style="width:100%; height:100%; object-fit:cover; filter:${isCancelled ? 'brightness(0.4) grayscale(100%)' : (isDarkMuse ? 'contrast(1.2) brightness(0.8) hue-rotate(320deg)' : 'brightness(0.9)')};">
                          <div style="position:absolute; top:-1px; left:-1px; background: ${isDarkMuse ? 'rgba(200,0,0,0.8)' : 'linear-gradient(135deg, var(--primary), #8b6d19)'}; padding:5px 12px; border-bottom-right-radius:10px; font-family: 'JetBrains Mono'; font-weight:bold; color:#000; font-size:12px; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);">LV ${idol.level || 1}</div>
                          
-                         <div style="position:absolute; bottom:0; padding:40px 15px 15px; width:100%; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);">
+                         <div style="position:absolute; bottom:0; padding:60px 15px 15px; width:100%; background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, transparent 100%);">
                              <h4 style="margin:0 0 4px 0; font-size: 18px; color:${isDarkMuse ? '#ff4d4d' : '#fff'}; text-transform:uppercase; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${idol.name}${idol.isReal ? ' <span style="font-size:14px;color:#38bdf8;" title="Real Life Celebrity">☑️</span>' : ''}</h4>
-                             <div style="font-size:11px; color:var(--primary); font-weight:600; text-transform: uppercase;">[ ${idol.nationality || 'Unknown'} ]</div>
-                             <div style="font-size:11px; color:#ccc; font-weight:600; text-shadow:1px 1px 2px #000; text-transform: uppercase;">${idol.concept || 'Trainee'}</div>
+                             <div style="font-size:12px; color:var(--primary); font-weight:800; text-transform: uppercase;">[ ${idol.nationality || 'Unknown'} ]</div>
+                             <div style="font-size:11px; color:#ddd; font-weight:700; margin-top:2px; line-height: 1.4; text-transform: uppercase;">${idol.concept || 'Trainee'}</div>
                          </div>
                     </div>
                     
-                    <div style="padding: 16px; background: var(--bg-surface); flex: 1; display:flex; flex-direction:column; gap:12px; border-top: 2px solid ${isDarkMuse ? '#ff4d4d' : 'var(--primary)'};">
+                    <div style="padding: 16px; background: rgba(20,20,25,0.95); flex: 1; display:flex; flex-direction:column; gap:12px; border-top: 2px solid ${isDarkMuse ? '#ff4d4d' : 'var(--gold)'}; backdrop-filter: blur(10px);">
                         
-                        <div style="display:flex; justify-content: space-between; font-size:13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom:6px;">
-                            <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Fans</span>
-                            <span style="color:var(--gold); font-weight:800;">${(idol.fans || 0).toLocaleString()}</span>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom:10px;">
+                            <div style="display:flex; flex-direction: column; gap:2px;">
+                                <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Fans</span>
+                                <span style="color:var(--gold); font-weight:800; font-size:13px;">${(idol.fans || 0).toLocaleString()}</span>
+                            </div>
+                            <div style="display:flex; flex-direction: column; gap:2px; text-align:right;">
+                                <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Fame</span>
+                                <span style="color:var(--primary); font-weight:800; font-size:13px;">${idol.stats.fame || 0}</span>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom:10px;">
+                            <div style="display:flex; flex-direction: column; gap:2px;">
+                                <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Visual</span>
+                                <span style="color:#fff; font-weight:800; font-size:13px;">${idol.stats.visual || 0}</span>
+                            </div>
+                            <div style="display:flex; flex-direction: column; gap:2px; text-align:right;">
+                                <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Risk</span>
+                                <span style="color:var(--error); font-weight:800; font-size:13px;">${idol.scandalRisk || idol.stats.scandal_risk || 0}%</span>
+                            </div>
                         </div>
                         
-                        <div style="display:flex; justify-content: space-between; font-size:13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom:6px;">
-                            <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Visual</span>
-                            <span style="color:#fff; font-weight:bold;">${idol.stats.visual}</span>
-                        </div>
-                        
-                        <div style="display:flex; flex-direction: column; gap: 4px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom:6px;">
+                        <div style="display:flex; flex-direction: column; gap: 4px; padding-bottom:6px;">
                             <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:0.5px;">Physique</span>
                             <div style="color:rgba(255,255,255,0.9); font-size:11px; font-weight:500; line-height:1.4;">${this.formatPhysique(idol.measurements)}</div>
                         </div>
                         
                         <div style="margin-top:auto; padding-top:4px;">
                             <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:6px; font-weight:bold;">
-                                <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px;">Stress</span>
-                                <span style="color:${stress > 60 ? 'var(--error)' : (stress > 30 ? 'var(--gold)' : 'var(--success)')};">${stress}%</span>
+                                <span style="color:var(--text-muted); text-transform:uppercase; font-size:10px; letter-spacing:1px;">Stress</span>
+                                <span style="font-family: 'JetBrains Mono'; font-size:13px; color:${stress > 60 ? 'var(--error)' : (stress > 30 ? 'var(--gold)' : 'var(--success)')};">${stress}%</span>
                             </div>
-                            <div style="background: rgba(0,0,0,0.5); height:4px; border-radius:2px; overflow:hidden;">
-                                <div style="height:100%; width:${stress}%; background: ${stress > 60 ? 'var(--error)' : (stress > 30 ? 'var(--gold)' : 'var(--success)')}; box-shadow: 0 0 5px ${stress > 60 ? 'var(--error)' : 'transparent'};"></div>
+                            <div style="background: rgba(0,0,0,0.6); height:4px; border-radius:2px; overflow:hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);">
+                                <div style="height:100%; width:${stress}%; background: ${stress > 60 ? 'var(--error)' : (stress > 30 ? 'var(--gold)' : 'var(--success)')}; box-shadow: 0 0 5px ${stress > 60 ? 'var(--error)' : 'transparent'}; transition: width 0.3s ease;"></div>
                             </div>
                         </div>
                         
@@ -2859,7 +3052,9 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             
             <div class="action-group mt-20" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <button class="btn-action btn-accent w-full" onclick="gameApp.openChat('${idol.id}')">💬 TRÒ CHUYỆN</button>
+                <button class="btn-action w-full" style="background:#059669; color:white; border:none;" onclick="gameApp.closeIdolProfile(); gameApp.switchView('jobs'); gameApp.showToast('Vui lòng chọn hợp đồng cho ' + '${idol.name}', 'info');">🏢 GIAO VIỆC</button>
                 <button id="btn-update-modal-${idol.id}" class="btn-action btn-primary w-full" onclick="gameApp.triggerUpdateIdol('${idol.id}')">CẬP NHẬT TREND</button>
+                <button class="btn-action w-full" style="background:#3b82f6; color:white; border:none;" onclick="gameApp.renameIdol('${idol.id}')">✏️ ĐỔI NGHỆ DANH</button>
                 <button class="btn-action" style="background: linear-gradient(135deg, #f59e0b, #d946ef); color:white; border:none;" onclick="gameApp.openMuseGram('${idol.id}')">🌐 MUSEGRAM</button>
                 ${(idol.affinity || 0) >= 80 ? 
                     `<button class="btn-action" style="background:#e11d48; color:white; border:none;" onclick="gameApp.openDating('${idol.id}')">🥂 HẸN HÒ (VIP)</button>` : 
@@ -2929,6 +3124,28 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         document.getElementById('idol-profile-modal').style.display = 'none';
     },
 
+    renameIdol(id) {
+        const idol = cardEngine.getIdol(id);
+        if (!idol) return;
+        this.showDialog({
+            title: "ĐỔI NGHỆ DANH",
+            message: `Quyết định thay đổi nghệ danh cho ${idol.name}.<br><br><input type='text' id='new-idol-name' value='${idol.name}' class='w-full p-2' style='background:var(--bg-elevated); color:white; border:1px solid var(--border-color); border-radius:4px;'>`,
+            type: "confirm",
+            onConfirm: () => {
+                const newNameInput = document.getElementById('new-idol-name');
+                if (newNameInput && newNameInput.value.trim() !== "") {
+                    const newName = newNameInput.value.trim();
+                    if (newName !== idol.name) {
+                        idol.name = newName;
+                        dbManager.saveIdolData(idol);
+                        this.showToast(`Đã thay đổi nghệ danh thành ${newName}!`, "success");
+                        this.refreshUI(id);
+                    }
+                }
+            }
+        });
+    },
+
     currentChatIdol: null,
     async openChat(id) {
         this.closeIdolProfile();
@@ -2975,8 +3192,17 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         
         document.getElementById('chat-modal').style.display = 'flex';
 
-        // Greet dynamically based on mood and affinity
-        this.generateDynamicGreeting(idol);
+        if (!idol.chatHistory) idol.chatHistory = [];
+        
+        if (idol.chatHistory.length > 0) {
+            idol.chatHistory.forEach(msg => {
+                this.appendMessage(msg.role, msg.text, null, false);
+            });
+            this.appendMessage('system', `--- Tiếp tục cuộc trò chuyện ---`, null, false);
+        } else {
+            // Greet dynamically based on mood and affinity only if first time
+            this.generateDynamicGreeting(idol);
+        }
     },
 
     async generateDynamicGreeting(idol) {
@@ -3016,7 +3242,17 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         this.currentChatIdol = null;
     },
 
-    appendMessage(role, text, id = null) {
+    clearChat() {
+        if (!this.currentChatIdol) return;
+        this.currentChatIdol.chatHistory = [];
+        dbManager.saveIdolData(this.currentChatIdol);
+        const messagesBox = document.getElementById('chat-messages');
+        messagesBox.innerHTML = '';
+        this.appendMessage('system', `[Hệ thống] Đã xoá lịch sử trò chuyện.`, null, false);
+        this.generateDynamicGreeting(this.currentChatIdol);
+    },
+
+    appendMessage(role, text, id = null, saveToHistory = true) {
         const messagesBox = document.getElementById('chat-messages');
         const bubble = document.createElement('div');
         if (id) bubble.id = id;
@@ -3028,6 +3264,14 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
             bubble.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
         } else {
             bubble.innerHTML = formattedText;
+            if (saveToHistory && this.currentChatIdol) {
+                if (!this.currentChatIdol.chatHistory) this.currentChatIdol.chatHistory = [];
+                this.currentChatIdol.chatHistory.push({ role, text });
+                if (this.currentChatIdol.chatHistory.length > 20) {
+                    this.currentChatIdol.chatHistory.shift(); // Keep only last 20 messages
+                }
+                dbManager.saveIdolData(this.currentChatIdol);
+            }
         }
         
         messagesBox.appendChild(bubble);
@@ -3059,11 +3303,9 @@ Output BẮT BUỘC theo MỘT JSON DÂY chuyền duy nhất:
         }
 
         // Lấy lịch sử chat để làm ngữ cảnh
-        const messagesBox = document.getElementById('chat-messages');
-        const historyNodes = Array.from(messagesBox.querySelectorAll('.chat-bubble')).slice(-6, -1); // Lấy 5 tin nhắn gần nhất
-        const chatHistory = historyNodes.map(node => {
-            const isUser = node.classList.contains('user');
-            return (isUser ? "Sếp: " : idol.name + ": ") + node.textContent;
+        const chatHistory = (idol.chatHistory || []).slice(-10).map(msg => {
+            if (msg.role === 'system') return `Hệ thống: ${msg.text}`;
+            return (msg.role === 'user' ? "Sếp: " : idol.name + ": ") + msg.text;
         }).join('\n');
 
         // Context - Enhanced Prompt for Stats Adjustment
@@ -3187,6 +3429,7 @@ PHẢN HỒI DUY NHẤT BẰNG RAW JSON:
                     idol.level = (idol.level || 1) + 1;
                     idol.exp -= 100;
                     this.showToast(`🎉 ${idol.name} ĐÃ LÊN CẤP ${idol.level}!`, "success");
+                    this.triggerLevelUpEffect(idol.name, idol.level);
                     sysActions.push(`Level Up! LV.${idol.level}`);
                 } else {
                     sysActions.push(`+${data.exp_gain} EXP`);

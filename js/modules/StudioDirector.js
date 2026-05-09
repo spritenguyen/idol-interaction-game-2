@@ -14,15 +14,15 @@ class StudioDirector {
 
         if (corruption > 50) {
             visualModifiers.push("dark makeup, intense gaze, mysterious aura, gothic elements");
-            emotionalContext += "She is deeply immersed in the dark side of fame (corrupted). ";
+            emotionalContext += "deeply immersed in the dark side of fame";
         }
         if (stress > 80) {
             visualModifiers.push("tired expression, messy hair, dimly lit, melancholic mood");
-            emotionalContext += "She is extremely stressed, exhausted and emotionally drained. ";
+            emotionalContext += "extremely stressed and emotionally drained";
         }
         if (affinity > 80) {
             visualModifiers.push("soft eyes, relaxed posture, subtle warm glow");
-            emotionalContext += "She feels very comfortable and affectionate towards the camera. ";
+            emotionalContext += "comfortable and affectionate towards the camera";
         }
 
         let outfitContext = "";
@@ -30,80 +30,53 @@ class StudioDirector {
             if (idol.equippedOutfit) {
                 const outfitItem = gameManager.shopItems.find(i => i.id === idol.equippedOutfit);
                 if (outfitItem && outfitItem.effect) {
-                    outfitContext += `\nMANDATORY OUTFIT FOR THIS SHOOT: The model MUST wear "${outfitItem.effect}". Include this exactly in the visualPrompt.`;
+                    outfitContext += `, wearing ${outfitItem.effect}`;
                 }
             }
             if (idol.equippedShoe) {
                 const shoeItem = gameManager.shopItems.find(i => i.id === idol.equippedShoe);
                 if (shoeItem && shoeItem.promptEffect) {
-                    outfitContext += `\nMANDATORY SHOES: The model MUST wear "${shoeItem.promptEffect}". IMPORTANT: Enforce FULL-BODY shot or wide-angle framing so the shoes are visible. Mention this directly in the visualPrompt.`;
+                    outfitContext += `, wearing shoes ${shoeItem.promptEffect}, full-body shot to show shoes`;
                 }
             }
             if (idol.equippedAccessory) {
                 const accItem = gameManager.shopItems.find(i => i.id === idol.equippedAccessory);
                 if (accItem && (accItem.promptEffect || accItem.effect)) {
                     const effectStr = accItem.promptEffect || accItem.effect;
-                    outfitContext += `\nMANDATORY ACCESSORY: The model MUST wear "${effectStr}". Mention this directly in the visualPrompt.`;
+                    outfitContext += `, wearing accessory ${effectStr}`;
                 }
             }
         }
 
-        const extraPrompts = visualModifiers.length > 0 ? ` Always include these visual elements: [${visualModifiers.join(' | ')}].` : '';
+        const extraPrompts = visualModifiers.length > 0 ? ` [${visualModifiers.join(', ')}] ` : '';
 
         const nat = idol.nationality && idol.nationality !== "Unknown" ? ` (` + idol.nationality + `)` : '';
         const ageStr = idol.age ? ` ${idol.age}yo` : '';
-        const realStr = idol.isReal ? `REAL-LIFE CELEBRITY: The subject is a well-known real person. You MUST explicitly include "${idol.name}" and their likeness in the generated visualPrompt. Ensure the generated image accurately reflects the real-life facial features of ${idol.name}.` : `FICTIONAL MODEL.`;
+        const realStr = idol.isReal ? `real-life celebrity likeness of ${idol.name}` : `fashion model`;
         
         let measurementsContext = "";
         if (idol.measurements) {
-            measurementsContext = `\nModel physical traits: Height ${idol.measurements.height || '?'}, Weight ${idol.measurements.weight || '?'}. Incorporate this body type naturally into the visual prompt.`;
+            measurementsContext = `Height ${idol.measurements.height || '?'}, Weight ${idol.measurements.weight || '?'}`;
         }
         
         let preciseTraitsContext = "";
         if (idol.physicalTraits) {
-            preciseTraitsContext = `\nMANDATORY FACIAL/PHYSICAL FEATURES: "${idol.physicalTraits}". You MUST include these exact physical details in the generated visualPrompt to ensure face/body consistency.`;
+            preciseTraitsContext = `, physical traits: ${idol.physicalTraits}`;
         }
 
-        const systemPrompt = `You are a visionary Art Director & Lead Cinematic Photographer. 
-        Your task is to craft a world-class, highly detailed English image generation prompt for a top fashion model named "${idol.name}"${ageStr}${nat}.
-        ${realStr}
-        Her foundational concept/style: "${idol.concept}".${measurementsContext}${preciseTraitsContext}
-        User's creative vision for this shoot: "${userConcept}".${outfitContext}
-        ${emotionalContext}
-        
-        INSTRUCTIONS:
-        1. Contextual Scene Setup: Parse the user's creative vision. If they described an outfit, location, pose, or mood, integrate it perfectly with the overarching concept.
-        2. Priority Framing: VERY IMPORTANT - Frame the shot according to the user's pose/vision (e.g. if close-up, do not use full-body). If no specific pose/framing is mentioned, prioritize FULL-BODY SHOTS.
-        
-        OUTPUT STRICTLY IN JSON FORMAT DO NOT OUTPUT MARKDOWN. JSON format:
-        {
-          "visualPrompt": "[Cinematic English prompt containing: Subject, Outfit, Pose, Background, Framing, Lighting${extraPrompts}]",
-          "technicalSpecs": "Camera: [Model], Lens: [Focal Length]mm f/[Aperture], Look: [Style]"
-        }`;
+        // Tối ưu hóa render: Chống lỗi giải phẫu
+        const anatomyOptimization = "perfect human anatomy, symmetrical beautiful face, highly detailed flawless realistic natural eyes, perfect detailed hands and fingers, perfect proportional legs, exactly 5 fingers per hand, realistic body proportions, masterpiece, photorealistic, 8k resolution. NO deformed, NO bad anatomy, NO bad hands, NO missing fingers, NO extra digits, NO asymmetrical face, NO cross-eyed, NO unnatural body, NO mutated hands, NO extra limbs";
 
-        try {
-            let result = await apiManager.generateText(systemPrompt);
-            let jsonStr = result;
-            const match = result.match(/\{[\s\S]*\}/);
-            if (match) jsonStr = match[0];
-            else jsonStr = result.replace(/```json/g, '').replace(/```/g, '').trim();
-            const data = JSON.parse(jsonStr);
-            
-            // Tối ưu hóa render: Chống lỗi giải phẫu
-            const anatomyOptimization = "perfect human anatomy, highly detailed symmetrical beautiful face, flawless realistic natural eyes, perfect detailed hands and fingers, perfect proportional legs, 5 fingers, realistic body proportions, masterpiece, 8k resolution, photorealistic. NO deformed, NO bad anatomy, NO bad hands, NO missing fingers, NO extra digits, NO asymmetrical face, NO cross-eyed, NO unnatural body";
-            
-            return {
-                prompt: `${data.visualPrompt}, ${anatomyOptimization}`,
-                techBase: data.technicalSpecs
-            };
-        } catch (error) {
-            const extraFallback = visualModifiers.length > 0 ? `, ${visualModifiers.join(', ')}` : '';
-            const anatomyOptimization = "perfect human anatomy, symmetrical beautiful face, nice clear eyes, perfect hands, correct legs, masterpiece, 8k. NO deformed, NO bad anatomy, NO bad hands, NO missing fingers, NO extra digits, NO asymmetrical face, NO cross-eyed";
-            return {
-                prompt: `Cinematic fashion portrait, ${idol.name}, ${idol.concept}, ${userConcept}, professional lighting, ${anatomyOptimization}${extraFallback}`,
-                techBase: "Camera: Sony A7RV, Lens: 85mm f/1.4 GM, Simulation: Kodak Portra 400"
-            };
-        }
+        // Xây dựng prompt viết riêng cho model (nội suy programmatic) để tối ưu hiệu suất tối đa (không cần chờ text LLM)
+        const cinematicPrompt = `Cinematic professional photoshoot of ${idol.name}, a ${ageStr} ${realStr}${nat}. Concept: ${idol.concept}. User vision: ${userConcept}.${outfitContext}. ${measurementsContext}${preciseTraitsContext}. Mood/State: ${emotionalContext}. ${extraPrompts}. Professional studio lighting, global illumination, highly detailed environment. ${anatomyOptimization}`;
+        
+        const techBase = "Camera: Sony A7RV, Lens: 85mm f/1.4 GM, Simulation: Kodak Portra 400";
+        
+        // Trả về ngay lập tức
+        return {
+            prompt: cinematicPrompt,
+            techBase: techBase
+        };
     }
 
     async executePhotoshoot(idolId, userConcept, imageModel) {
