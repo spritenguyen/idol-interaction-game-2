@@ -175,6 +175,9 @@ class GameManager {
             this.state.actionCount = 0;
         }
         this.state.actionCount++;
+        if (window.gameApp && typeof window.gameApp.processSubsidiaryCycle === 'function') {
+            window.gameApp.processSubsidiaryCycle();
+        }
         this.save();
         
         if (typeof cardEngine !== 'undefined') {

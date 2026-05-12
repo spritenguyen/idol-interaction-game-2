@@ -36,61 +36,43 @@
             <button id="nav-btn-management" class="nav-btn" onclick="gameApp.switchView('management')" title="Quản lý đội hình Model của bạn">
                 <span class="nav-icon">👥</span> <span class="nav-text">ĐỘI HÌNH</span>
             </button>
-            <button id="nav-btn-jobs" class="nav-btn" onclick="gameApp.switchView('jobs')" title="Nhận hợp đồng kiếm tiền">
-                <span class="nav-icon">💼</span> <span class="nav-text">CÔNG VIỆC</span>
-            </button>
-            
-            <div class="nav-section-title mt-10">CƠ SỞ & NÂNG CẤP</div>
-            <button id="nav-btn-shop" class="nav-btn" onclick="gameApp.switchView('shop')" title="Cửa hàng vật phẩm">
-                <span class="nav-icon">🛍️</span> <span class="nav-text">CỬA HÀNG</span>
-            </button>
             <button id="nav-btn-inventory" class="nav-btn" onclick="gameApp.openInventory()" title="Kho đồ của bạn">
                 <span class="nav-icon">🎒</span> <span class="nav-text">TÚI ĐỒ</span>
+            </button>
+
+            <div class="nav-section-title mt-10">THƯƠNG MẠI & SỰ KIỆN</div>
+            <button id="nav-btn-jobs" class="nav-btn" onclick="gameApp.switchView('jobs')" title="Hub hoạt động thương mại">
+                <span class="nav-icon">💼</span> <span class="nav-text">KINH DOANH (HUB)</span>
             </button>
             <button id="nav-btn-scout" class="nav-btn highlighted-nav" onclick="gameApp.switchView('scout')" title="Tìm kiếm Model tiềm năng">
                 <span class="nav-icon">📡</span> <span class="nav-text">SCOUT (TÌM MỚI)</span>
             </button>
-            <button id="nav-btn-spa" class="nav-btn" onclick="gameApp.switchView('spa')" title="Trung tâm hồi phục sắc đẹp">
-                <span class="nav-icon">💆‍♀️</span> <span class="nav-text">SPA BEAUTY</span>
-            </button>
             
-            <div class="nav-section-title mt-10">MỞ RỘNG KINH DOANH</div>
-            <button id="nav-btn-cinema" class="nav-btn" onclick="gameApp.switchView('cinema')" title="Sản xuất dự án Điện Ảnh">
-                <span class="nav-icon">🎬</span> <span class="nav-text">ĐIỆN ẢNH</span>
+            <div class="nav-section-title mt-10">CHĂM SÓC & VẬT PHẨM</div>
+            <button id="nav-btn-condo" class="nav-btn" onclick="gameApp.switchView('condo')" title="Khu chăm sóc">
+                <span class="nav-icon">🏙️</span> <span class="nav-text">CHĂM SÓC (HUB)</span>
             </button>
-            <button id="nav-btn-fashion" class="nav-btn" onclick="gameApp.switchView('fashion')" title="Tham gia Fashion Week">
-                <span class="nav-icon">✨</span> <span class="nav-text">FASHION WEEK</span>
-            </button>
-            <button id="nav-btn-pr" class="nav-btn" onclick="gameApp.switchView('pr')" title="Trung tâm Xử lý Khủng hoảng & PR">
-                <span class="nav-icon">📰</span> <span class="nav-text">TRUYỀN THÔNG (PR)</span>
-            </button>
-            <button id="nav-btn-sponsor" class="nav-btn" onclick="gameApp.switchView('sponsor')" title="Tìm kiếm Nhà tài trợ & Đầu tư">
-                <span class="nav-icon">🤝</span> <span class="nav-text">TÀI TRỢ</span>
-            </button>
-            <button id="nav-btn-techtree" class="nav-btn" onclick="gameApp.switchView('techtree')" title="Nâng cấp công nghệ & Passive Buff">
-                <span class="nav-icon">🧬</span> <span class="nav-text">TECH TREE</span>
+            <button id="nav-btn-shop" class="nav-btn" onclick="gameApp.switchView('shop')" title="Cửa hàng vật phẩm & Spa">
+                <span class="nav-icon">🛍️</span> <span class="nav-text">CỬA HÀNG</span>
             </button>
             
             <div class="nav-section-title mt-10">CAO CẤP & ĐỐI KHÁNG</div>
-            <button id="nav-btn-brand" class="nav-btn" onclick="gameApp.switchView('brand')" title="Đấu trường thương hiệu">
-                <span class="nav-icon">💎</span> <span class="nav-text">THƯƠNG HIỆU</span>
-            </button>
             <button id="nav-btn-studio" class="nav-btn" onclick="gameApp.switchView('studio')" title="The Studio Lab">
                 <span class="nav-icon">📸</span> <span class="nav-text">THE STUDIO</span>
-            </button>
-            <button id="nav-btn-condo" class="nav-btn" onclick="gameApp.switchView('condo')" title="Khu căn hộ">
-                <span class="nav-icon">🏙️</span> <span class="nav-text">KHU CĂN HỘ</span>
             </button>
             <button id="nav-btn-underground" class="nav-btn text-error" onclick="gameApp.switchView('underground')" title="Thế giới ngầm" style="color: var(--error);">
                 <span class="nav-icon" style="color: var(--error);">♠️</span> <span class="nav-text">UNDERGROUND</span>
             </button>
+            <button id="nav-btn-techtree" class="nav-btn" onclick="gameApp.switchView('techtree')" title="Hệ thống nâng cấp đồ sộ">
+                <span class="nav-icon">🧬</span> <span class="nav-text">NGHIÊN CỨU & NÂNG CẤP</span>
+            </button>
             
-            <div class="nav-section-title mt-10">MỞ RỘNG</div>
+            <div class="nav-section-title mt-10">HỆ THỐNG</div>
             <button class="nav-btn" onclick="gameApp.openGallery()" title="Mở kho lưu trữ hình ảnh">
                 <span class="nav-icon">🖼️</span> <span class="nav-text">GALLERY</span>
             </button>
             <button id="nav-btn-achievements" class="nav-btn" onclick="gameApp.switchView('achievements')" title="Xem các thành tựu">
-                <span class="nav-icon">🏆</span> <span class="nav-text">THÀNH TỰU</span>
+                <span class="nav-icon">🏆</span> <span class="nav-text">THÀNH TỰU & TÀI TRỢ</span>
             </button>
             <button class="nav-btn" onclick="gameApp.openGuide()" title="Hướng dẫn chơi">
                 <span class="nav-icon">📖</span> <span class="nav-text">HƯỚNG DẪN</span>
@@ -205,6 +187,13 @@
 
         <!-- BRAND VIEW -->
         <section id="brand-view" class="view-section hidden">
+            <div class="sub-nav-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('jobs')">💼 Hợp Đồng Nhanh</button>
+                <button class="btn-action" style="flex:1; border: 1px solid var(--gold);" onclick="gameApp.switchView('brand')">💎 Thương Hiệu</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('cinema')">🎬 Điện Ảnh</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('fashion')">✨ Fashion Week</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('subsidiary')">🏢 Công Ty Con</button>
+            </div>
             <div class="view-header">
                 <div>
                     <h2>💎 BRAND ARENA (ĐẤU TRƯỜNG QUẢNG CÁO)</h2>
@@ -217,8 +206,33 @@
             </div>
         </section>
 
+        <!-- SUBSIDIARY VIEW -->
+        <section id="subsidiary-view" class="view-section hidden">
+            <div class="sub-nav-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('jobs')">💼 Hợp Đồng</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('brand')">💎 Thương Hiệu</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('cinema')">🎬 Điện Ảnh</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('fashion')">✨ Fashion Week</button>
+                <button class="btn-action" style="flex:1; border: 1px solid var(--gold);" onclick="gameApp.switchView('subsidiary')">🏢 Công Ty Con</button>
+            </div>
+            <div class="view-header">
+                <div>
+                    <h2>🏢 QUẢN LÝ CÔNG TY CON (SUBSIDIARY)</h2>
+                    <p class="view-desc">Chi nhánh tự động hóa. Bổ nhiệm Model vào ban quản trị để thu lợi nhuận thụ động.</p>
+                </div>
+            </div>
+            <div id="subsidiary-grid" class="management-grid"></div>
+        </section>
+
         <!-- JOBS VIEW -->
         <section id="jobs-view" class="view-section hidden">
+            <div class="sub-nav-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button class="btn-action" style="flex:1; border: 1px solid var(--gold);" onclick="gameApp.switchView('jobs')">💼 Hợp Đồng Nhanh</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('brand')">💎 Thương Hiệu</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('cinema')">🎬 Điện Ảnh</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('fashion')">✨ Fashion Week</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('subsidiary')">🏢 Công Ty Con</button>
+            </div>
             <div class="view-header">
                 <div>
                     <h2>💼 CÔNG VIỆC & HỢP ĐỒNG</h2>
@@ -358,6 +372,11 @@
 
         <!-- SPA VIEW -->
         <section id="spa-view" class="view-section hidden">
+            <div class="sub-nav-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('condo')">🏙️ Căn Hộ Tương Tác</button>
+                <button class="btn-action" style="flex:1; border: 1px solid var(--gold);" onclick="gameApp.switchView('spa')">💆‍♀️ Spa Nghỉ Dưỡng</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('pr')">📰 Truyền Thông (PR)</button>
+            </div>
             <div class="view-header">
                 <div>
                     <h2>💆‍♀️ BEAUTY SPA</h2>
@@ -371,6 +390,11 @@
 
         <!-- CONDO VIEW -->
         <section id="condo-view" class="view-section hidden">
+            <div class="sub-nav-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button class="btn-action" style="flex:1; border: 1px solid var(--gold);" onclick="gameApp.switchView('condo')">🏙️ Căn Hộ Tương Tác</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('spa')">💆‍♀️ Spa Nghỉ Dưỡng</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('pr')">📰 Truyền Thông (PR)</button>
+            </div>
             <div class="view-header">
                 <div>
                     <h2>🏙️ KHU CĂN HỘ</h2>
@@ -385,23 +409,39 @@
 
         <!-- MANAGEMENT VIEW -->
         <section id="management-view" class="view-section hidden">
-            <div class="view-header" style="flex-wrap: wrap; gap: 15px;">
-                <div style="flex-grow: 1;">
-                    <h2>OFFICIAL ROSTER</h2>
-                    <p class="view-desc">Danh sách Model thuộc quyền quản lý của Agency.</p>
+            <div class="view-header" style="flex-direction: column; align-items: stretch; gap: 15px; background: rgba(0,0,0,0.4); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h2 style="font-size: 28px; background: linear-gradient(90deg, var(--gold), #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">OFFICIAL ROSTER</h2>
+                        <p class="view-desc" style="margin-top: 4px;">Quản lý toàn bộ talent, Model và Idol thuộc quyền kiểm chứng của Agency.</p>
+                    </div>
+                    <div id="model-count-badge" class="badge font-mono" style="margin: 0; font-size: 16px; padding: 6px 16px; background: var(--primary); color: #000; box-shadow: 0 0 15px rgba(212,175,55,0.3);">0 MODELS</div>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <select id="roster-sort" onchange="gameApp.renderCards()" style="background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: var(--radius-md); font-family: 'Inter', sans-serif;">
+                
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div style="flex-grow: 1; display: flex; gap: 10px; align-items: center;">
+                        <span style="color: var(--text-muted); font-size: 14px;">🔍</span>
+                        <input type="text" id="roster-search" placeholder="Tìm kiếm tên, concept, quốc tịch..." onkeyup="gameApp.renderCards()" style="background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 14px; font-family: 'Inter', sans-serif;">
+                    </div>
+                    <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.1); margin: 0 10px;"></div>
+                    <select id="roster-tier-filter" onchange="gameApp.renderCards()" style="background: transparent; color: var(--gold); border: none; outline: none; font-weight: bold; cursor: pointer; font-family: 'Inter', sans-serif;">
+                        <option value="ALL" style="background: #111;">Tất cả hạng / Tiers</option>
+                        <option value="S" style="background: #111;">👑 Hạng S (Siêu Sao)</option>
+                        <option value="A" style="background: #111;">⭐ Hạng A (Nổi Tiếng)</option>
+                        <option value="B" style="background: #111;">✨ Hạng B (Tiềm Năng)</option>
+                        <option value="C" style="background: #111;">🌱 Thấp (Trainee)</option>
+                    </select>
+                    <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.1); margin: 0 10px;"></div>
+                    <select id="roster-sort" onchange="gameApp.renderCards()" style="background: var(--bg-elevated); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: var(--radius-md); font-family: 'Inter', sans-serif; cursor: pointer;">
                         <option value="fame_desc">Sắp xếp: Fame cao nhất</option>
                         <option value="fame_asc">Sắp xếp: Fame thấp nhất</option>
-                        <option value="stress_desc">Sắp xếp: Nghỉ ngơi nhiều nhất (Ít mệt)</option>
+                        <option value="stress_desc">Sắp xếp: Nghỉ ngơi nhiều nhất</option>
                         <option value="stress_asc">Sắp xếp: Áp lực cao nhất</option>
                         <option value="name_asc">Sắp xếp: Tên (A-Z)</option>
                     </select>
-                    <div id="model-count-badge" class="badge font-mono" style="margin: 0;">0 MODELS</div>
                 </div>
             </div>
-            <div id="idol-container" class="management-grid"></div>
+            <div id="idol-container" class="management-grid" style="margin-top: 25px;"></div>
         </section>
 
         <!-- SCOUT VIEW -->
@@ -508,6 +548,13 @@
 
         <!-- CINEMA VIEW -->
         <section id="cinema-view" class="view-section hidden">
+            <div class="sub-nav-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('jobs')">💼 Hợp Đồng Nhanh</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('brand')">💎 Thương Hiệu</button>
+                <button class="btn-action" style="flex:1; border: 1px solid var(--gold);" onclick="gameApp.switchView('cinema')">🎬 Điện Ảnh</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('fashion')">✨ Fashion Week</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('subsidiary')">🏢 Công Ty Con</button>
+            </div>
             <div class="view-header">
                 <div>
                     <h2>CINE-TECH STUDIOS</h2>
@@ -519,6 +566,13 @@
 
         <!-- FASHION WEEK VIEW -->
         <section id="fashion-view" class="view-section hidden">
+            <div class="sub-nav-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('jobs')">💼 Hợp Đồng Nhanh</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('brand')">💎 Thương Hiệu</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('cinema')">🎬 Điện Ảnh</button>
+                <button class="btn-action" style="flex:1; border: 1px solid var(--gold);" onclick="gameApp.switchView('fashion')">✨ Fashion Week</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('subsidiary')">🏢 Công Ty Con</button>
+            </div>
             <div class="view-header">
                 <div>
                     <h2>GLOBAL FASHION WEEK</h2>
@@ -535,6 +589,11 @@
 
         <!-- PR CENTER VIEW -->
         <section id="pr-view" class="view-section hidden">
+            <div class="sub-nav-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('condo')">🏙️ Căn Hộ Tương Tác</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('spa')">💆‍♀️ Spa Nghỉ Dưỡng</button>
+                <button class="btn-action" style="flex:1; border: 1px solid var(--gold);" onclick="gameApp.switchView('pr')">📰 Truyền Thông (PR)</button>
+            </div>
             <div class="view-header">
                 <div>
                     <h2>TRUNG TÂM PR & XỬ LÝ KHỦNG HOẢNG</h2>
@@ -546,6 +605,10 @@
 
         <!-- SPONSOR VIEW -->
         <section id="sponsor-view" class="view-section hidden">
+            <div class="sub-nav-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('achievements')">🏆 Thành Tựu</button>
+                <button class="btn-action" style="flex:1; border: 1px solid var(--gold);" onclick="gameApp.switchView('sponsor')">🤝 Nhà Tài Trợ</button>
+            </div>
             <div class="view-header">
                 <div>
                     <h2>NHÀ TÀI TRỢ & ĐẦU TƯ</h2>
@@ -568,6 +631,10 @@
 
         <!-- ACHIEVEMENTS VIEW -->
         <section id="achievements-view" class="view-section hidden">
+            <div class="sub-nav-tabs" style="margin-bottom: 20px; display: flex; gap: 10px; overflow-x: auto; background: var(--bg-surface); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button class="btn-action" style="flex:1; border: 1px solid var(--gold);" onclick="gameApp.switchView('achievements')">🏆 Thành Tựu</button>
+                <button class="btn-action" style="flex:1;" onclick="gameApp.switchView('sponsor')">🤝 Nhà Tài Trợ</button>
+            </div>
             <div class="view-header">
                 <div>
                     <h2>SYSTEM ACHIEVEMENTS</h2>
@@ -834,6 +901,36 @@
         <div style="display: flex; gap: 12px; justify-content: center;">
             <button id="dialog-btn-cancel" class="btn-action btn-danger" style="flex: 1;">HỦY</button>
             <button id="dialog-btn-confirm" class="btn-action btn-primary" style="flex: 1;">XÁC NHẬN</button>
+        </div>
+    </div>
+</div>
+
+<!-- INVENTORY MODAL -->
+<div id="inventory-modal" class="modal" style="z-index: 9999;">
+    <div class="modal-content" style="max-width: 700px; width: 90%; background: linear-gradient(to bottom, var(--bg-elevated), #111); border: 1px solid var(--gold); border-radius: 16px; padding: 0; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh;">
+        <div style="padding: 20px 24px; border-bottom: 1px solid rgba(212,175,55,0.2); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 28px;">🎒</span>
+                <div>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: var(--gold); letter-spacing: 1px; text-transform: uppercase;">Kho Vật Phẩm</h3>
+                    <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-muted);">Quản lý trang bị sắc đẹp và tài sản đầu tư.</p>
+                </div>
+            </div>
+            <button class="btn-action" style="padding: 6px 12px; background: rgba(239,68,68,0.1); color: var(--error); border: 1px solid var(--error); margin: 0;" onclick="document.getElementById('inventory-modal').style.display='none'">ĐÓNG ✕</button>
+        </div>
+        
+        <div style="padding: 15px 24px; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div id="inventory-tabs" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
+                <!-- Tabs rendered via JS -->
+            </div>
+        </div>
+
+        <div id="inventory-content" style="padding: 24px; overflow-y: auto; flex-grow: 1;">
+            <!-- Items rendered via JS -->
+        </div>
+        
+        <div style="padding: 15px 24px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.4); text-align: center;">
+            <p style="margin: 0; font-size: 12px; color: var(--text-muted);">Sử dụng vật phẩm thông minh để tối ưu hóa hiệu suất làm việc của Model.</p>
         </div>
     </div>
 </div>
