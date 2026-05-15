@@ -270,8 +270,9 @@ Cấu trúc JSON chuẩn:
         const idol = this.roster.get(id);
         if (!idol) return null;
 
-        const prompt = `Phân tích biến động thị trường cho: "${idol.name}". Stats: Fame(${idol.stats.fame}), Visual(${idol.stats.visual}), Risk(${idol.stats.scandal_risk}). 
-        Tạo 1 sự kiện trend (tiếng Việt). BẮT BUỘC TRẢ VỀ JSON (Không chứa chú thích //): {"new_stats": {"fame": X, "visual": Y, "scandal_risk": Z}, "trend_reason": "..."}`;
+        const prompt = `Phân tích biến động thị trường cho: "${idol.name}". Stats hiện hành: Fame(${idol.stats.fame}), Visual(${idol.stats.visual}), Risk(${idol.stats.scandal_risk}). 
+        Tạo 1 sự kiện trend (tiếng Việt). LƯU Ý: Danh tiếng (Fame) KHÔNG CÓ GIỚI HẠN. Visual và Risk giới hạn 0-100.
+        BẮT BUỘC TRẢ VỀ JSON (Không chứa chú thích): {"fame_change": X, "visual_change": Y, "scandal_risk_change": Z, "trend_reason": "..."}`;
 
         try {
             let res;
@@ -282,7 +283,10 @@ Cấu trúc JSON chuẩn:
             }
             const json = JSON.parse(this._extractJSON(res));
             
-            idol.stats = json.new_stats;
+            idol.stats.fame = Math.max(0, idol.stats.fame + (json.fame_change || 0));
+            idol.stats.visual = Math.min(100, Math.max(0, idol.stats.visual + (json.visual_change || 0)));
+            idol.scandalRisk = Math.min(100, Math.max(0, (idol.scandalRisk || idol.stats.scandal_risk || 0) + (json.scandal_risk_change || 0)));
+            idol.stats.scandal_risk = idol.scandalRisk;
             idol.latestTrend = json.trend_reason;
             
             await dbManager.saveIdolData(idol);

@@ -27,7 +27,7 @@ class PollinationsService {
         });
     }
 
-    async generateImage(prompt, requestedModel = null, useCache = false) {
+    async generateImage(prompt, requestedModel = null, useCache = false, width = 1024, height = 1024) {
         if (typeof gameApp !== 'undefined') gameApp.setApiState("Rendering...", "is-active");
 
         const modelToUse = requestedModel || this.imageModels[this.currentImageModelIndex];
@@ -46,7 +46,7 @@ class PollinationsService {
         }
 
         const seed = useCache ? 42 : Math.floor(Math.random()*1000000);
-        const params = `?model=${modelToUse}&width=1024&height=1024&nologo=true&seed=${seed}`;
+        const params = `?model=${modelToUse}&width=${width}&height=${height}&nologo=true&seed=${seed}`;
         
         let resultBase64 = null;
 

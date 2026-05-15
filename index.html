@@ -29,54 +29,56 @@
         </div>
         
         <nav class="main-nav">
-            <div class="nav-section-title">ĐIỀU HÀNH</div>
-            <button id="nav-btn-map" class="nav-btn active" onclick="gameApp.switchView('map')" title="Bản đồ thành phố">
-                <span class="nav-icon">🗺️</span> <span class="nav-text">BẢN ĐỒ TP</span>
-            </button>
-            <button id="nav-btn-management" class="nav-btn" onclick="gameApp.switchView('management')" title="Quản lý đội hình Model của bạn">
-                <span class="nav-icon">👥</span> <span class="nav-text">ĐỘI HÌNH</span>
-            </button>
-            <button id="nav-btn-inventory" class="nav-btn" onclick="gameApp.openInventory()" title="Kho đồ của bạn">
-                <span class="nav-icon">🎒</span> <span class="nav-text">TÚI ĐỒ</span>
-            </button>
+            <div class="nav-section-title">QUẢN LÝ & ĐIỀU HÀNH</div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <button id="nav-btn-map" class="nav-btn active" onclick="gameApp.switchView('map')" title="Bản đồ thành phố">
+                    <span class="nav-icon">🗺️</span> <span class="nav-text">BẢN ĐỒ TP</span>
+                </button>
+                <button id="nav-btn-management" class="nav-btn" onclick="gameApp.switchView('management')" title="Quản lý đội hình Model của bạn">
+                    <span class="nav-icon">👥</span> <span class="nav-text">ĐỘI HÌNH</span>
+                </button>
+                <button id="nav-btn-inventory" class="nav-btn" onclick="gameApp.openInventory()" title="Kho đồ của bạn">
+                    <span class="nav-icon">🎒</span> <span class="nav-text">TÚI ĐỒ</span>
+                </button>
+                <button id="nav-btn-jobs" class="nav-btn" onclick="gameApp.switchView('jobs')" title="Hoạt động thương mại">
+                    <span class="nav-icon">💼</span> <span class="nav-text">KINH DOANH</span>
+                </button>
+                <button id="nav-btn-scout" class="nav-btn highlighted-nav" onclick="gameApp.switchView('scout')" title="Tìm kiếm Model tiềm năng">
+                    <span class="nav-icon">📡</span> <span class="nav-text">SCOUT (TÌM MỚI)</span>
+                </button>
+            </div>
 
-            <div class="nav-section-title mt-10">THƯƠNG MẠI & SỰ KIỆN</div>
-            <button id="nav-btn-jobs" class="nav-btn" onclick="gameApp.switchView('jobs')" title="Hub hoạt động thương mại">
-                <span class="nav-icon">💼</span> <span class="nav-text">KINH DOANH (HUB)</span>
-            </button>
-            <button id="nav-btn-scout" class="nav-btn highlighted-nav" onclick="gameApp.switchView('scout')" title="Tìm kiếm Model tiềm năng">
-                <span class="nav-icon">📡</span> <span class="nav-text">SCOUT (TÌM MỚI)</span>
-            </button>
+            <div class="nav-section-title nav-divider">CƠ SỞ & DỊCH VỤ</div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <button id="nav-btn-studio" class="nav-btn" onclick="gameApp.switchView('studio')" title="The Studio Lab">
+                    <span class="nav-icon">📸</span> <span class="nav-text">THE STUDIO</span>
+                </button>
+                <button id="nav-btn-condo" class="nav-btn" onclick="gameApp.switchView('condo')" title="Khu chăm sóc">
+                    <span class="nav-icon">🏙️</span> <span class="nav-text">KHU CĂN HỘ</span>
+                </button>
+                <button id="nav-btn-shop" class="nav-btn" onclick="gameApp.switchView('shop')" title="Cửa hàng vật phẩm & Spa">
+                    <span class="nav-icon">🛍️</span> <span class="nav-text">CỬA HÀNG</span>
+                </button>
+                <button id="nav-btn-techtree" class="nav-btn" onclick="gameApp.switchView('techtree')" title="Hệ thống nâng cấp">
+                    <span class="nav-icon">🧬</span> <span class="nav-text">NGHIÊN CỨU</span>
+                </button>
+                <button id="nav-btn-underground" class="nav-btn text-error" onclick="gameApp.switchView('underground')" title="Thế giới ngầm" style="color: var(--error);">
+                    <span class="nav-icon" style="color: var(--error);">♠️</span> <span class="nav-text">UNDERGROUND</span>
+                </button>
+            </div>
             
-            <div class="nav-section-title mt-10">CHĂM SÓC & VẬT PHẨM</div>
-            <button id="nav-btn-condo" class="nav-btn" onclick="gameApp.switchView('condo')" title="Khu chăm sóc">
-                <span class="nav-icon">🏙️</span> <span class="nav-text">CHĂM SÓC (HUB)</span>
-            </button>
-            <button id="nav-btn-shop" class="nav-btn" onclick="gameApp.switchView('shop')" title="Cửa hàng vật phẩm & Spa">
-                <span class="nav-icon">🛍️</span> <span class="nav-text">CỬA HÀNG</span>
-            </button>
-            
-            <div class="nav-section-title mt-10">CAO CẤP & ĐỐI KHÁNG</div>
-            <button id="nav-btn-studio" class="nav-btn" onclick="gameApp.switchView('studio')" title="The Studio Lab">
-                <span class="nav-icon">📸</span> <span class="nav-text">THE STUDIO</span>
-            </button>
-            <button id="nav-btn-underground" class="nav-btn text-error" onclick="gameApp.switchView('underground')" title="Thế giới ngầm" style="color: var(--error);">
-                <span class="nav-icon" style="color: var(--error);">♠️</span> <span class="nav-text">UNDERGROUND</span>
-            </button>
-            <button id="nav-btn-techtree" class="nav-btn" onclick="gameApp.switchView('techtree')" title="Hệ thống nâng cấp đồ sộ">
-                <span class="nav-icon">🧬</span> <span class="nav-text">NGHIÊN CỨU & NÂNG CẤP</span>
-            </button>
-            
-            <div class="nav-section-title mt-10">HỆ THỐNG</div>
-            <button class="nav-btn" onclick="gameApp.openGallery()" title="Mở kho lưu trữ hình ảnh">
-                <span class="nav-icon">🖼️</span> <span class="nav-text">GALLERY</span>
-            </button>
-            <button id="nav-btn-achievements" class="nav-btn" onclick="gameApp.switchView('achievements')" title="Xem các thành tựu">
-                <span class="nav-icon">🏆</span> <span class="nav-text">THÀNH TỰU & TÀI TRỢ</span>
-            </button>
-            <button class="nav-btn" onclick="gameApp.openGuide()" title="Hướng dẫn chơi">
-                <span class="nav-icon">📖</span> <span class="nav-text">HƯỚNG DẪN</span>
-            </button>
+            <div class="nav-section-title nav-divider">HỆ THỐNG</div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <button class="nav-btn" onclick="gameApp.openGallery()" title="Mở kho lưu trữ hình ảnh">
+                    <span class="nav-icon">🖼️</span> <span class="nav-text">GALLERY</span>
+                </button>
+                <button id="nav-btn-achievements" class="nav-btn" onclick="gameApp.switchView('achievements')" title="Xem các thành tựu">
+                    <span class="nav-icon">🏆</span> <span class="nav-text">THÀNH TỰU</span>
+                </button>
+                <button class="nav-btn" onclick="gameApp.openGuide()" title="Hướng dẫn chơi">
+                    <span class="nav-icon">📖</span> <span class="nav-text">HƯỚNG DẪN</span>
+                </button>
+            </div>
             <!-- Thêm spacer để mobile có thể scroll hết -->
             <div style="height: 80px;" class="mobile-only-spacer"></div>
         </nav>
@@ -499,15 +501,77 @@
                 </div>
             </div>
             <div class="studio-layout">
-                <div class="studio-controls glass-panel">
+                <div class="studio-controls glass-panel" style="overflow-y: auto; max-height: 80vh;">
                     <div class="control-group">
                         <label>👤 Model Tham Gia</label>
                         <select id="studio-idol-select" class="elegant-select"></select>
                     </div>
-                    
+
+                    <div style="margin: 15px 0; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">
+                        <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 14px;">📸 Cinematography & Camera Options</h4>
+                        
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div class="control-group" style="flex: 1; min-width: 140px;">
+                                <label>📐 Aspect Ratio</label>
+                                <select id="studio-aspect-ratio" class="elegant-select">
+                                    <option value="9:16">9:16 (Story/TikTok)</option>
+                                    <option value="1:1">1:1 (MuseGram)</option>
+                                    <option value="16:9">16:9 (Cinematic/Poster)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="control-group" style="flex: 1; min-width: 140px;">
+                                <label>👁️ Lens (Ống kính)</label>
+                                <select id="studio-lens" class="elegant-select">
+                                    <option value="">Auto (AI Tự Chọn)</option>
+                                    <option value="wide angle 24mm">24mm (Wide Angle)</option>
+                                    <option value="portrait lens 85mm f1.4 blur background">85mm (Xoá Phông Chân Dung)</option>
+                                    <option value="macro lens closeup">Macro (Đặc Tả)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="control-group mt-10">
+                            <label>💡 Lighting (Ánh sáng)</label>
+                            <select id="studio-lighting" class="elegant-select">
+                                <option value="">Auto (Tự Định Hình)</option>
+                                <option value="Rembrandt">Rembrandt (Cổ điển & Sang trọng)</option>
+                                <option value="neon noir dramatic">Neon Noir (Cyberpunk/Hiện đại)</option>
+                                <option value="golden hour natural sunlight">Golden Hour (Nắng Chiều)</option>
+                                <option value="studio softbox front">Studio Softbox (Thì trang chuyên nghiệp)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin: 15px 0; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">
+                        <h4 style="color: var(--gold); margin-bottom: 10px; font-size: 14px;">👗 Wardrobe & Styling</h4>
+                        
                         <div class="control-group">
-                            <label>🎬 Chỉ đạo Concept (Sáng tạo AI)</label>
-                            <textarea id="studio-concept" class="elegant-input" rows="4" placeholder="Nhập bối cảnh, câu chuyện, phong cách hoặc ý tưởng trang phục. Tính năng Sáng tạo AI sẽ tự động phân tích và tạo prompt tối ưu."></textarea>
+                            <label>👗 Preset Trang Phục</label>
+                            <select id="studio-outfit-preset" class="elegant-select">
+                                <option value="">Auto (Dựa theo Concept)</option>
+                                <option value="red carpet designer gown">Red Carpet Gown (Dạ Hội)</option>
+                                <option value="hypebeast designer streetwear">Streetwear (Đường Phố)</option>
+                                <option value="futuristic cyber-tech outfit">Cyber-Tech (Khoa Học Viễn Tưởng)</option>
+                                <option value="luxury lingerie">Lingerie (Đồ Lót Gợi Cảm)</option>
+                                <option value="professional business suit">Business Power Suit (Công Sở Quyền Lực)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Checkboxes for Inventory Accessories will be injected here during runtime -->
+                        <div class="control-group mt-10" id="studio-inventory-accessories">
+                            <label style="font-size: 12px; color: var(--text-muted);">Phụ Kiện Đặc Biệt (Từ hành trang)</label>
+                            <div id="studio-accessory-list" style="display: flex; flex-direction: column; gap: 5px; margin-top: 5px;">
+                                <!-- Checkboxes here -->
+                                <em style="font-size: 11px; color: var(--text-muted);">Bạn chưa có phụ kiện trang sức nào trong túi đồ.</em>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin: 15px 0; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">
+                        <div class="control-group">
+                            <label>🎬 Chỉ đạo Concept Chi Tiết (Tùy Chọn)</label>
+                            <textarea id="studio-concept" class="elegant-input" rows="3" placeholder="Nhập concept, bối cảnh, câu chuyện cụ thể..."></textarea>
                         </div>
                     
                         <div class="control-group mt-10">
@@ -522,25 +586,42 @@
                                 <option value="laying down gracefully, looking up at camera">🛏️ Nằm tạo dáng quý phái</option>
                             </select>
                         </div>
+                    </div>
                     
-                    <button id="btn-shoot" class="btn-action btn-primary w-full mt-auto" onclick="gameApp.triggerPhotoshoot()">📸 BẤM MÁY (200 💰)</button>
+                    <button id="btn-shoot" class="btn-action w-full mt-auto" style="background: linear-gradient(135deg, var(--gold), #854d0e); color: black; font-weight: bold; border: none; padding: 12px;" onclick="gameApp.triggerPhotoshoot()">📸 BẤM MÁY (200 💰)</button>
                 </div>
                 
-                <div class="render-viewport glass-panel" id="viewport">
-                    <div id="studio-status" class="status-overlay">Waiting for Art Direction...</div>
-                    
-                    <div id="studio-tools" class="studio-tools hidden">
-                        <button class="tool-btn" id="btn-studio-publish" onclick="gameApp.publishToMuseGramFromStudio()" title="Đăng ngay lên MuseGram">🌐</button>
-                        <button class="tool-btn" onclick="gameApp.setAsAvatar()" title="Đặt làm Ảnh đại diện">👤</button>
-                        <button class="tool-btn" onclick="gameApp.saveToGallery()" title="Lưu vào Kho Ảnh">💾</button>
-                        <button class="tool-btn" onclick="gameApp.downloadImage()" title="Tải xuống thiết bị">⬇️</button>
+                <div class="render-viewport glass-panel" id="viewport" style="position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                    <!-- Loading Darkroom UI -->
+                    <div id="darkroom-overlay" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(10,10,10,0.95); z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+                        <div style="font-size: 40px; animation: pulse 1.5s infinite;">📸</div>
+                        <div style="color: var(--gold); margin-top: 15px; font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 2px;">DEVELOPING FILM...</div>
+                        <div id="darkroom-status" style="color: var(--text-muted); font-size: 11px; margin-top: 8px;">Đang rửa ảnh trong bóng tối</div>
                     </div>
 
-                    <img id="studio-image" class="hidden" onclick="gameApp.zoomImage()">
+                    <div id="studio-status" class="status-overlay">Waiting for Art Direction...</div>
+                    
+                    <div id="studio-tools" class="studio-tools hidden" style="flex-wrap: wrap;">
+                        <button class="tool-btn" id="btn-studio-publish" onclick="gameApp.publishToMuseGramFromStudio()" title="Đăng ngay lên MuseGram" style="width: auto; height: auto; padding: 6px 12px; border-radius: 20px; font-size: 13px;">🌐 MuseGram</button>
+                        <button class="tool-btn" onclick="gameApp.setAsAvatar()" title="Đặt làm Ảnh đại diện" style="width: auto; height: auto; padding: 6px 12px; border-radius: 20px; font-size: 13px;">👤 Avatar</button>
+                        <button class="tool-btn" onclick="gameApp.saveToGallery()" title="Lưu vào Kho Ảnh" style="width: auto; height: auto; padding: 6px 12px; border-radius: 20px; font-size: 13px;">💾 Lưu</button>
+                        <button class="tool-btn" id="btn-magazine-cover" onclick="gameApp.submitToMagazine()" style="width: auto; height: auto; padding: 6px 12px; border-radius: 20px; font-size: 13px; background: rgba(251,191,36,0.2); color: var(--gold); border: 1px solid var(--gold);" title="Gửi bìa Tạp Chí">🌟 Đầu Quân Lên Bìa Báo</button>
+                    </div>
+
+                    <img id="studio-image" class="hidden" onclick="gameApp.zoomImage()" style="transition: filter 1s ease-out, opacity 1s ease-out; object-fit: contain;">
                     
                     <div id="prompt-container" class="prompt-overlay hidden">
                         <div id="prompt-display" class="prompt-text collapsed font-mono"></div>
                         <button onclick="gameApp.togglePrompt()" class="btn-text">[CHI TIẾT]</button>
+                    </div>
+
+                    <!-- Filter Controls (Visible after render) -->
+                    <div id="filter-controls" style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: none; gap: 8px; z-index: 5; background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                        <button style="background:none; border:none; color:white; font-size:12px; cursor:pointer;" onclick="gameApp.applyFilter('none')">Original</button>
+                        <div style="width:1px; background:rgba(255,255,255,0.2);"></div>
+                        <button style="background:none; border:none; color:white; font-size:12px; cursor:pointer;" onclick="gameApp.applyFilter('grayscale(100%) contrast(1.2)')">B&W</button>
+                        <div style="width:1px; background:rgba(255,255,255,0.2);"></div>
+                        <button style="background:none; border:none; color:white; font-size:12px; cursor:pointer;" onclick="gameApp.applyFilter('sepia(0.4) contrast(1.1) brightness(0.9) hue-rotate(-10deg)')">Vintage</button>
                     </div>
                 </div>
             </div>
@@ -680,22 +761,9 @@
                 <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Hệ thống sẽ chạy bằng Proxy tích hợp tốc độ cao. Khi hết phấn hoa, tự động chuyển vùng Free.</p>
             </div>
 
-            <div class="setting-group">
+            <div class="setting-group" style="display: none;">
                 <h4 class="group-title">Tùy chỉnh Sidebar</h4>
-                <p style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">Chọn menu hiển thị (Bản đồ là cố định).</p>
-                <div id="sidebar-customize-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size:13px;">
-                    <label><input type="checkbox" value="management" onchange="gameApp.updateSidebarVisibility()"> Đội Hình</label>
-                    <label><input type="checkbox" value="inventory" onchange="gameApp.updateSidebarVisibility()"> Túi Đồ</label>
-                    <label><input type="checkbox" value="underground" onchange="gameApp.updateSidebarVisibility()"> Underground</label>
-                    <label><input type="checkbox" value="jobs" onchange="gameApp.updateSidebarVisibility()"> Công Việc</label>
-                    <label><input type="checkbox" value="shop" onchange="gameApp.updateSidebarVisibility()"> Cửa Hàng</label>
-                    <label><input type="checkbox" value="scout" onchange="gameApp.updateSidebarVisibility()"> Scout</label>
-                    <label><input type="checkbox" value="spa" onchange="gameApp.updateSidebarVisibility()"> Spa Beauty</label>
-                    <label><input type="checkbox" value="studio" onchange="gameApp.updateSidebarVisibility()"> The Studio</label>
-                    <label><input type="checkbox" value="condo" onchange="gameApp.updateSidebarVisibility()"> Khu Căn Hộ</label>
-                    <label><input type="checkbox" value="brand" onchange="gameApp.updateSidebarVisibility()"> Thương Hiệu</label>
-                    <label><input type="checkbox" value="achievements" onchange="gameApp.updateSidebarVisibility()"> Thành Tựu</label>
-                </div>
+                <div id="sidebar-customize-container" style="display: none;"></div>
             </div>
 
             <div class="setting-group">

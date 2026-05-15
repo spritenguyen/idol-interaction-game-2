@@ -3,7 +3,7 @@ class StudioDirector {
         this.isRendering = false;
     }
 
-    async _craftCinematicPrompt(idol, userConcept) {
+    async _craftCinematicPrompt(idol, userConcept, cameraOverrides = {}) {
         let emotionalContext = "";
         let visualModifiers = [];
 
@@ -27,25 +27,39 @@ class StudioDirector {
 
         let outfitContext = "";
         if (typeof gameManager !== 'undefined') {
-            if (idol.equippedOutfit) {
-                const outfitItem = gameManager.shopItems.find(i => i.id === idol.equippedOutfit);
-                if (outfitItem && outfitItem.effect) {
-                    outfitContext += `, wearing ${outfitItem.effect}`;
+            if (cameraOverrides.outfitPreset) {
+                outfitContext += ", wearing " + cameraOverrides.outfitPreset;
+            }
+            if (cameraOverrides.equippedItems && cameraOverrides.equippedItems.length > 0) {
+                outfitContext += ", accessorized with " + cameraOverrides.equippedItems.join(" and ");
+            } else {
+                if (idol.equippedOutfit) {
+                    const outfitItem = gameManager.shopItems.find(i => i.id === idol.equippedOutfit);
+                    if (outfitItem && outfitItem.effect) {
+                        outfitContext += `, wearing ${outfitItem.effect}`;
+                    }
+                }
+                if (idol.equippedShoe) {
+                    const shoeItem = gameManager.shopItems.find(i => i.id === idol.equippedShoe);
+                    if (shoeItem && shoeItem.promptEffect) {
+                        outfitContext += `, wearing shoes ${shoeItem.promptEffect}, full-body shot to show shoes`;
+                    }
+                }
+                if (idol.equippedAccessory) {
+                    const accItem = gameManager.shopItems.find(i => i.id === idol.equippedAccessory);
+                    if (accItem && (accItem.promptEffect || accItem.effect)) {
+                        const effectStr = accItem.promptEffect || accItem.effect;
+                        outfitContext += `, wearing accessory ${effectStr}`;
+                    }
                 }
             }
-            if (idol.equippedShoe) {
-                const shoeItem = gameManager.shopItems.find(i => i.id === idol.equippedShoe);
-                if (shoeItem && shoeItem.promptEffect) {
-                    outfitContext += `, wearing shoes ${shoeItem.promptEffect}, full-body shot to show shoes`;
-                }
-            }
-            if (idol.equippedAccessory) {
-                const accItem = gameManager.shopItems.find(i => i.id === idol.equippedAccessory);
-                if (accItem && (accItem.promptEffect || accItem.effect)) {
-                    const effectStr = accItem.promptEffect || accItem.effect;
-                    outfitContext += `, wearing accessory ${effectStr}`;
-                }
-            }
+        }
+
+        if (cameraOverrides.lighting) {
+            visualModifiers.push(cameraOverrides.lighting + " lighting");
+        }
+        if (cameraOverrides.lens) {
+            visualModifiers.push(cameraOverrides.lens + " shot");
         }
 
         const extraPrompts = visualModifiers.length > 0 ? ` [${visualModifiers.join(', ')}] ` : '';
@@ -70,16 +84,18 @@ class StudioDirector {
         // Xây dựng prompt viết riêng cho model (nội suy programmatic) để tối ưu hiệu suất tối đa (không cần chờ text LLM)
         const cinematicPrompt = `Cinematic professional photoshoot of ${idol.name}, a ${ageStr} ${realStr}${nat}. Concept: ${idol.concept}. User vision: ${userConcept}.${outfitContext}. ${measurementsContext}${preciseTraitsContext}. Mood/State: ${emotionalContext}. ${extraPrompts}. Professional studio lighting, global illumination, highly detailed environment. ${anatomyOptimization}`;
         
-        const techBase = "Camera: Sony A7RV, Lens: 85mm f/1.4 GM, Simulation: Kodak Portra 400";
+        const techBase = `Camera: Sony A7RV, Lens: ${cameraOverrides.lens || '85mm f/1.4 GM'}, Lighting: ${cameraOverrides.lighting || 'Studio Standard'}, Simulation: Kodak Portra 400`;
         
         // Trả về ngay lập tức
         return {
             prompt: cinematicPrompt,
-            techBase: techBase
+            techBase: techBase,
+            width: cameraOverrides.width || 1024,
+            height: cameraOverrides.height || 1024
         };
     }
 
-    async executePhotoshoot(idolId, userConcept, imageModel) {
+    async executePhotoshoot(idolId, userConcept, imageModel, cameraOverrides = {}) {
         if (this.isRendering) return null;
         this.isRendering = true;
         
@@ -87,8 +103,8 @@ class StudioDirector {
         if (!idol) { this.isRendering = false; return null; }
         
         try {
-            const specs = await this._craftCinematicPrompt(idol, userConcept);
-            const imageUrl = await pollinationsService.generateImage(specs.prompt, imageModel);
+            const specs = await this._craftCinematicPrompt(idol, userConcept, cameraOverrides);
+            const imageUrl = await pollinationsService.generateImage(specs.prompt, imageModel, false, specs.width, specs.height);
             
             this.isRendering = false;
             if (!imageUrl) return null;
